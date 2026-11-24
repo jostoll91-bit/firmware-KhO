@@ -1,5 +1,9 @@
 # Offene Punkte und Ideen
 
+## Nächste Tests
+- **Board-Test Schritt 2** (siehe PLAN.md): Meldungen in App und beim Zuhause-Knoten, Wedeln → höchstens 2
+  Meldungen, Akku- vs. USB-Text, Kanal-Sperre (Warnung im Log, falls der Primary-Channel noch Standard ist).
+
 ## Energie
 - **Strommessung der Gesamtschaltung**, bevor Batterie und Gehäuse gewählt werden. Der Funk bleibt im Leerlauf auf
   Empfang (mehrere mA). Das dominiert, nicht der Reed-Kontakt (~3 µA).

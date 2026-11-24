@@ -36,12 +36,17 @@ Kurz und mit Begründung. Basis: Firmware v2.7.26, Board `seeed_xiao_nrf52840_ki
 - **Textnachricht (TEXT_MESSAGE_APP), Broadcast, Primary-Channel**, damit der Zuhause-Knoten ohne Anpassung
   weiterleitet.
 - **Mindestabstand 10 s** zwischen Ereignis-Meldungen. Danach wird nur der Endzustand gemeldet, damit ein
-  flatternder Kontakt das Mesh nicht flutet.
+  flatternder Kontakt das Mesh nicht flutet. Verglichen wird mit dem **zuletzt gesendeten** Zustandstext
+  (`lastSentState`, beim Boot = Boot-Zustand). Endet das Flattern im schon gemeldeten Zustand, wird nichts
+  gesendet und die Pause startet nicht neu.
 - **Kanal-Sperre:** Ist der Primary-Channel der öffentliche Standardkanal (Standard-PSK + Preset-Name, z. B.
   "LongFast"), wird nicht gesendet. Es gibt eine deutliche Warnung im Log.
 - **`want_ack=false` in v1.** Bei Broadcasts würde `want_ack=true` nur bis zum ersten Hop wiederholen
   (Details in OPEN.md, Zustellsicherheit). Kandidat für v1.1.
+- **Kanal-Sperre zählt als Sendeversuch** für den Mindestabstand, damit die Warnung das Log nicht flutet.
 - **Batterie** aus `powerStatus` (wird alle 20 s aktualisiert). Ohne erkannten Akku steht "USB" im Text.
+  Prozent nur, wenn das Board `BATTERY_PIN` oder `HAS_PMU` hat (sonst gibt es `getBatteryChargePercent()` nicht);
+  das Kit hat `BATTERY_PIN`.
 
 ## Zeit
 - **Zeit nur aus dem Mesh:** v2.7.26 übernimmt Mesh-Zeit nur aus Positions-Paketen mit echtem GPS

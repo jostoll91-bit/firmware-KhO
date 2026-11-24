@@ -52,4 +52,23 @@ erst nach dem Commit feststeht.
 ## 2026-11-24 – CLAUDE.md eingecheckt
 - CLAUDE.md ergänzt: Einstieg über DEVLOG/PLAN, D6-Zuordnung bestätigt, gps_mode NOT_PRESENT als Pflicht,
   Log über `tools/serlog.py` statt `pio device monitor`, PLAN.md als vierte Doku-Datei. Erstmals versioniert.
-- Commit: dieser Commit (Hash trägt Schritt 2 nach).
+- Commit: `0ac6e1bb4`.
+
+## 2026-11-24 – Schritt 2: Senden
+- `CustomSensorModule` (Basis) sendet jetzt: `sendText()` (TEXT_MESSAGE_APP, Broadcast, Primary-Channel,
+  `want_ack=false`, ccToPhone), `sendReport()` (`"<NAME> <prefix> <state> | <Akku ..% x.xxV | USB>"`),
+  Kanal-Sperre bei öffentlichem Standardkanal (LOG_WARN, nichts gesendet).
+- Ereignis-Meldung `Falle jetzt ...` sofort, danach 10 s Mindestabstand (`CUSTOM_SENSOR_MIN_EVENT_GAP_MS`).
+  Wechsel innerhalb der Pause werden zusammengefasst: Nach der Pause kommt nur der Endzustand, und nur wenn er
+  sich vom zuletzt gesendeten unterscheidet.
+- `TrapSensorModule` unverändert. Noch keine Start- und Statusmeldung (Schritt 3).
+- Commit: dieser Commit (Hash trägt der nächste Eintrag nach).
+- Ergebnis: `pio run -e seeed_xiao_nrf52840_kit` SUCCESS, keine Warnungen in den neuen Dateien, clang-format
+  (`.trunk/configs/.clang-format`) sauber. Nicht geflasht.
+
+  | | Schritt 1 | Schritt 2 | Differenz |
+  |---|---|---|---|
+  | Flash | 724 296 B (88,9 %) | 725 064 B (89,0 %) | **+768 B** |
+  | RAM (statisch) | 102 204 B | 102 204 B | 0 B |
+
+  Freier Flash: noch ca. 90,0 kB.

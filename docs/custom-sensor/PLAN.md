@@ -1,5 +1,8 @@
 # Plan Schritt 2 und 3
 
+**Status:** Schritt 2 umgesetzt und gebaut, **Board-Test Schritt 2 steht noch aus** (siehe "Test Schritt 2").
+Danach Schritt 3.
+
 Freigegebener Plan, so aufgeschrieben, dass man ihn ohne den Chatverlauf umsetzen kann. Stand nach Schritt 1
 (Commit `e1743618d`). Alle Fundstellen gelten für v2.7.26. Vor der Benutzung trotzdem im Quelltext gegenprüfen.
 
@@ -65,6 +68,14 @@ Freigegebener Plan, so aufgeschrieben, dass man ihn ohne den Chatverlauf umsetze
   - `Falle Status: ZU | Akku 87% 4.05V`
   - `Falle Start: ZU | Akku 87% 4.05V`
 - Puffer z. B. `char msg[120]` mit `snprintf`.
+
+### Umsetzung Schritt 2 (so gebaut, kleine Präzisierungen zum Plan)
+- `lastSentState` wird beim Init mit dem Boot-Zustand gefüllt (es wird beim Boot noch nichts gesendet). Ein
+  Wechsel und Zurückwechseln vor der ersten Meldung erzeugt so keine Meldung.
+- Gleicht der Zustand nach der Pause dem zuletzt gesendeten, wird nichts gesendet, und die 10-s-Pause startet
+  **nicht** neu. Der nächste echte Wechsel geht dann sofort raus.
+- Die Pause startet auch, wenn die Kanal-Sperre greift. So kommt die Warnung höchstens alle 10 s.
+- In Schritt 3 die Rückgabe in `runOnce()` um die Startmeldung erweitern, `sensorWakeMs()` bleibt zuletzt.
 
 ### Umfang Schritt 2
 - `sendText`, `sendReport`, Kanal-Sperre, Ereignis-Meldung mit 10-s-Mindestabstand und Endzustand, Akku/USB-Text.
