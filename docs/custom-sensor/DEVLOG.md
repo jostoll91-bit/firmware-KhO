@@ -176,4 +176,9 @@ erst nach dem Commit feststeht.
 - Neu `homeassistant-heartbeat-example.yaml` (HA-Package): `input_datetime` für letzte Meldung und letzten Alarm
   (übersteht HA-Neustart), Prüfung alle 15 min, Alarm bei >13 h, Wiederholung frühestens nach 6 h,
   "wieder da"-Meldung. YAML-Syntax geprüft, in HA nicht getestet.
+- Commit: `a7ad952a1`.
+
+## 2026-11-24 – Akku-Text: Idee verworfen
+- Akku-Teil im Text abschaltbar/plausibilisiert machen: verworfen (kein Akku, Wert im USB-Betrieb nicht
+  ausgewertet; bei echtem Akku neu bewerten). In DECISIONS.md unter "Verworfene Ideen", OPEN.md verweist darauf.
 - Commit: dieser Commit.

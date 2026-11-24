@@ -71,3 +71,9 @@ Kurz und mit Begründung. Basis: Firmware v2.7.26, Board `seeed_xiao_nrf52840_ki
 - **Zielrolle SENSOR, zum Testen `is_power_saving=false`.** Die Rolle beeinflusst das Senden von Textnachrichten
   nicht. Mit power_saving macht der nRF52 "Deep Sleep" als `delay()` + Reset. Dann laufen keine Module, und die
   Uhrzeit ist danach weg.
+
+## Verworfene Ideen
+- **Akku-Teil im Meldungstext abschaltbar oder plausibilisiert** (z. B. Build-Flag `SHOW_BATTERY`, oder springende
+  Werte als "Akku ?" ausgeben): **nicht umgesetzt.** Grund: Es ist kein Akku verfügbar, alles läuft im USB-Betrieb.
+  Der Akkuwert ist dort Rauschen, wird aber nirgends ausgewertet (HA wertet nur den Teil vor `|` aus, der
+  Fallen-Knoten ist von der Akku-Regel ausgeschlossen). Das Rauschen stört nicht. **Bei echtem Akku neu bewerten.**

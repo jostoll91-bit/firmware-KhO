@@ -7,8 +7,8 @@
 - **Ohne Akku wird ein Akku gemeldet.** Nur am USB zeigt die Firmware `battery hardware detected`, `usbPower=0`
   und Zufallswerte (49–94 %, 3,71–4,11 V). Darum steht in der Meldung `Akku ..%` statt `USB`. Vermutlich misst
   der ADC am offenen VBAT-Teiler (P0.31) nur Rauschen, und USB wird auf dem Kit nicht sicher erkannt.
-  Ideen: mit echtem Akku gegenprüfen; Ursache in `Power.cpp` ansehen (nur lesen); ggf. eigene Plausibilitätsprüfung
-  in `sendReport()` (z. B. stark springende Werte → "Akku ?"). Erst entscheiden, wenn ein Akku dran ist.
+  Mit echtem Akku gegenprüfen, ggf. Ursache in `Power.cpp` ansehen (nur lesen). Eine Änderung am Akku-Text
+  (abschalten/plausibilisieren) ist vorerst verworfen, siehe DECISIONS.md "Verworfene Ideen".
 - Kanal-Sperre (öffentlicher Standardkanal) am Board noch nicht ausprobiert.
 
 ## HomeAssistant
