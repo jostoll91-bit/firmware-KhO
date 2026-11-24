@@ -62,7 +62,7 @@ erst nach dem Commit feststeht.
   Wechsel innerhalb der Pause werden zusammengefasst: Nach der Pause kommt nur der Endzustand, und nur wenn er
   sich vom zuletzt gesendeten unterscheidet.
 - `TrapSensorModule` unverändert. Noch keine Start- und Statusmeldung (Schritt 3).
-- Commit: dieser Commit (Hash trägt der nächste Eintrag nach).
+- Commit: `5b29950b4`.
 - Ergebnis: `pio run -e seeed_xiao_nrf52840_kit` SUCCESS, keine Warnungen in den neuen Dateien, clang-format
   (`.trunk/configs/.clang-format`) sauber. Nicht geflasht.
 
@@ -72,3 +72,9 @@ erst nach dem Commit feststeht.
   | RAM (statisch) | 102 204 B | 102 204 B | 0 B |
 
   Freier Flash: noch ca. 90,0 kB.
+
+## 2026-11-24 – Korrektur Doku Schritt 2
+- Schritt 2 abgenommen. Falsche Aussage in PLAN.md und im Code-Kommentar korrigiert: Ein Wechsel kurz nach dem
+  Boot bleibt **nicht** unbemerkt. Der erste Wechsel geht immer sofort raus, der Boot-Zustand ist nur
+  Vergleichswert. Keine Code-Logik geändert (nur Kommentar), daher kein Neubau nötig.
+- Commit: dieser Commit.

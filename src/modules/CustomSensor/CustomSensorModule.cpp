@@ -91,8 +91,8 @@ int32_t CustomSensorModule::runOnce()
         }
         formatState(state, sizeof(state));
         LOG_INFO("%s: init done, state=%s", CUSTOM_SENSOR_NAME, state);
-        // Nothing is sent at boot in step 2 (start message follows in step 3). The boot state counts as
-        // "known", so a change back to it within the first gap is not reported twice.
+        // Nothing is sent at boot in step 2 (start message follows in step 3). The boot state is only the
+        // reference for comparing; the first change after boot is always sent immediately (no gap yet).
         strncpy(lastSentState, state, sizeof(lastSentState) - 1);
         lastSentState[sizeof(lastSentState) - 1] = '\0';
     }
