@@ -1,8 +1,8 @@
 # Offene Punkte und Ideen
 
 ## Nächste Tests
-- **Flash mit Fix der Zustände + 6/18**: Magnet dran → `OFFEN`, Magnet weg → `ZU (gefangen oder Kabelbruch)`,
-  `schedule active (06:00 and 18:00 Europe/Berlin)` nach gültiger Zeit. HA-Automatisierung auf Alarm bei ZU umstellen.
+- **HA-Automatisierung** auf Alarm bei `ZU` umstellen (Beispiel: `homeassistant-example.yaml`).
+- **Test mit echtem Akku** (Akku/USB-Text, siehe unten).
 
 ## Batterie / USB
 - **Ohne Akku wird ein Akku gemeldet.** Nur am USB zeigt die Firmware `battery hardware detected`, `usbPower=0`
@@ -27,6 +27,9 @@
   einen Widerstand nach Masse (oft 100 kOhm–1 MOhm), liegt der Pin bei offenem Kontakt unter der HIGH-Schwelle
   und wird als LOW gelesen, also als `OFFEN` (scharf) statt `ZU (gefangen oder Kabelbruch)`. Ein Fang würde
   dann übersehen. Vor dem Messen prüfen, ob "Magnet weg" weiter als ZU erkannt wird.
+  **Am Board bestätigt** (DEVLOG, Test Fix + 6/18): Mit angeschlossenem Analyzer wurde "Magnet weg" gar nicht
+  erkannt. Abhilfe für Messungen: Analyzer mit hochohmigem Eingang (≥10 MOhm) oder Pull-up zum Messen
+  vorübergehend kleiner wählen.
 
 ## Energie
 - **Strommessung der Gesamtschaltung**, bevor Batterie und Gehäuse gewählt werden. Der Funk bleibt im Leerlauf auf

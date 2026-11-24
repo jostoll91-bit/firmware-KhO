@@ -153,4 +153,15 @@ erst nach dem Commit feststeht.
   hängen nicht von der Zuordnung ab und gelten weiter. Der Zeitplan-Test (15:00/16:00) ist unabhängig und gilt.
 - Stunden geprüft: `CUSTOM_SENSOR_STATUS_HOUR_A/B` = 6/18 im Header, Test-Stunden nirgends eingecheckt.
 - Build: SUCCESS, Flash 725 896 B (−16 B ggü. Schritt 3), RAM unverändert, clang-format sauber.
+- Commit: `1bdc765d0`.
+
+## 2026-11-24 – Board-Test Fix + 6/18 (ein Flash, nur USB)
+- Flash OK. `Falle Start: OFFEN` bei Uptime 65 s (Magnet am Reed = scharf) ✅.
+- App verbunden → `time valid, schedule active (06:00 and 18:00 Europe/Berlin)` um 16:24:16 ✅ (Stunden 6/18 bestätigt).
+- Erster Magnet-Test: **keine Wechsel erkannt**, Pin blieb LOW. Ursache: Der **Logikanalyzer an D6** zog den
+  1-MOhm-Pull-up herunter (genau der Fall aus OPEN.md). Analyzer abgeklemmt, Test wiederholt:
+  - 16:26:47 Magnet weg → `Falle jetzt ZU (gefangen oder Kabelbruch)` sofort ✅
+  - 16:27:07 Magnet ran → `Falle jetzt OFFEN` sofort ✅
+  - 16:27:08/09 kurz ZU/OFFEN (Nachwackeln) in der Pause, 16:27:17 `equals last sent state, no message` ✅
+- Ergebnis: Fix der Zuordnung am Board bestätigt.
 - Commit: dieser Commit.

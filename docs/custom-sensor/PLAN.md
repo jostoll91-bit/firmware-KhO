@@ -1,9 +1,8 @@
 # Plan Schritt 2 und 3
 
-**Status:** Schritt 2 und 3 umgesetzt und am Board bestätigt. Danach Fix der vertauschten Zustände
-(`TRAP_CLOSED_MEANS_OPEN=1`). **Offen: ein Flash mit Fix + 6/18 und Log-Prüfung** (Magnet dran → OFFEN, Magnet weg →
-ZU (gefangen oder Kabelbruch), `schedule active (06:00 and 18:00 Europe/Berlin)`). Akku/USB-Text offen bis zum Test
-mit echtem Akku.
+**Status:** Schritt 1–3 und der Fix der Zuordnung (`TRAP_CLOSED_MEANS_OPEN=1`) sind am Board bestätigt, Firmware mit
+6/18 läuft. Offen: Akku/USB-Text (Test mit echtem Akku), weitere Punkte in OPEN.md. Für weitere Schritte gibt es
+noch keinen freigegebenen Plan.
 
 Freigegebener Plan, so aufgeschrieben, dass man ihn ohne den Chatverlauf umsetzen kann. Stand nach Schritt 1
 (Commit `e1743618d`). Alle Fundstellen gelten für v2.7.26. Vor der Benutzung trotzdem im Quelltext gegenprüfen.
