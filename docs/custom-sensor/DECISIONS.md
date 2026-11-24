@@ -43,6 +43,8 @@ Kurz und mit Begründung. Basis: Firmware v2.7.26, Board `seeed_xiao_nrf52840_ki
   "LongFast"), wird nicht gesendet. Es gibt eine deutliche Warnung im Log.
 - **`want_ack=false` in v1.** Bei Broadcasts würde `want_ack=true` nur bis zum ersten Hop wiederholen
   (Details in OPEN.md, Zustellsicherheit). Kandidat für v1.1.
+- **Pause startet nur bei einem Sendeversuch.** Bestätigt am Board (Test 2a): Endet die Pause mit dem schon
+  gesendeten Zustand, geht der nächste echte Wechsel sofort raus statt bis zu 10 s später.
 - **Kanal-Sperre zählt als Sendeversuch** für den Mindestabstand, damit die Warnung das Log nicht flutet.
 - **Batterie** aus `powerStatus` (wird alle 20 s aktualisiert). Ohne erkannten Akku steht "USB" im Text.
   Prozent nur, wenn das Board `BATTERY_PIN` oder `HAS_PMU` hat (sonst gibt es `getBatteryChargePercent()` nicht);

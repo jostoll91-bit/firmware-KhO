@@ -1,8 +1,17 @@
 # Offene Punkte und Ideen
 
-## Nächste Tests
-- **Board-Test Schritt 2** (siehe PLAN.md): Meldungen in App und beim Zuhause-Knoten, Wedeln → höchstens 2
-  Meldungen, Akku- vs. USB-Text, Kanal-Sperre (Warnung im Log, falls der Primary-Channel noch Standard ist).
+## Batterie / USB
+- **Ohne Akku wird ein Akku gemeldet.** Nur am USB zeigt die Firmware `battery hardware detected`, `usbPower=0`
+  und Zufallswerte (49–94 %, 3,71–4,11 V). Darum steht in der Meldung `Akku ..%` statt `USB`. Vermutlich misst
+  der ADC am offenen VBAT-Teiler (P0.31) nur Rauschen, und USB wird auf dem Kit nicht sicher erkannt.
+  Ideen: mit echtem Akku gegenprüfen; Ursache in `Power.cpp` ansehen (nur lesen); ggf. eigene Plausibilitätsprüfung
+  in `sendReport()` (z. B. stark springende Werte → "Akku ?"). Erst entscheiden, wenn ein Akku dran ist.
+- Kanal-Sperre (öffentlicher Standardkanal) am Board noch nicht ausprobiert.
+
+## Messaufbau
+- **Logikanalyzer an D6 kann das Ergebnis verfälschen.** Der Pull-up hat nur 1 MOhm. Hat der Analyzer-Eingang
+  einen Widerstand nach Masse (oft 100 kOhm–1 MOhm), liegt der Pin bei offenem Kontakt unter der HIGH-Schwelle
+  und wird als ZU gelesen. Vor dem Messen prüfen, ob "offen" weiter als OFFEN erkannt wird.
 
 ## Energie
 - **Strommessung der Gesamtschaltung**, bevor Batterie und Gehäuse gewählt werden. Der Funk bleibt im Leerlauf auf

@@ -77,4 +77,24 @@ erst nach dem Commit feststeht.
 - Schritt 2 abgenommen. Falsche Aussage in PLAN.md und im Code-Kommentar korrigiert: Ein Wechsel kurz nach dem
   Boot bleibt **nicht** unbemerkt. Der erste Wechsel geht immer sofort raus, der Boot-Zustand ist nur
   Vergleichswert. Keine Code-Logik geändert (nur Kommentar), daher kein Neubau nötig.
+- Commit: `230a83a62`.
+
+## 2026-11-24 – Board-Test Schritt 2 (geflasht, nur USB, kein Akku)
+- Erster Flash: Board blieb im Bootloader (USB `2886:0045` + Laufwerk `XIAO-SENSE`, kein Log). Zweiter Flash
+  ("Device programmed") OK, danach USB `239a:810b`, Firmware läuft.
+- Gerätekonfiguration: Das **eingebaute Detection Sensor Module war aktiv** (alte Testeinstellung,
+  `Testfalle2 detected` alle 15 s). In der App ausgeschaltet.
+- Kanal: Unser Knoten sendet auf Hash `0xec`, ein Nachbar hat unsere Pakete auf `0xec` weitergesendet. Der Kanal passt.
+- **Test 1, Wechsel** (langsam weg/ran): je eine Meldung, sofort ✅.
+- **Test 2b, Wedeln, Ende = zuletzt gesendet**: 3 Wechsel, 1 Meldung, danach `equals last sent state, no message` ✅.
+- **Test 2a, Wedeln ca. 10 s**: 22 Wechsel, 2 Meldungen (erste sofort, Endzustand ZU). Nach Pausenende war der
+  Zustand zufällig gleich dem gesendeten (keine Meldung, keine neue Pause), das abschließende ZU kam deshalb sofort ✅.
+- **Test 3, Kabelbruch**: Kabel ab → `OFFEN (oder Kabelbruch)` sofort, Kabel dran → `ZU` sofort ✅.
+  10-s-Pause auch hier gesehen (13:02:12 OFFEN, ZU 13:02:20 erkannt, 13:02:22 gesendet).
+- **Akku/USB ❌**: Nur am USB ohne Akku steht trotzdem `Akku ..% x.xxV`, der Wert springt zwischen 49 % / 3,71 V
+  und 94 % / 4,11 V (`battery hardware detected`, `usbPower=0`). Fehlmessung des offenen VBAT-Teilers, nicht
+  unser Code. Siehe OPEN.md.
+- Ankunft beim Zuhause-Knoten: im Log nur die Weiterleitung durch einen Nachbarn gesehen, vom Nutzer nicht
+  einzeln bestätigt.
+- Ergebnis: Schritt 2 am Board abgenommen, außer USB-Erkennung (offener Punkt).
 - Commit: dieser Commit.
