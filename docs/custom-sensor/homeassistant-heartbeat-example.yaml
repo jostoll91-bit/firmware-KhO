@@ -1,0 +1,101 @@
+# Home Assistant example: heartbeat alarm for the trap node ("Fallenmelder ohne Lebenszeichen").
+#
+# Written as a Home Assistant "package": one file that holds helpers and automations together.
+# Use it either
+#   a) as a package: in configuration.yaml add
+#        homeassistant:
+#          packages: !include_dir_named packages
+#      and save this file as  <config>/packages/fallenmelder_heartbeat.yaml
+#   b) or copy the parts: the two helpers below can also be created in the UI
+#      (Settings -> Devices & services -> Helpers -> Date and/or time, "Date and time"),
+#      using exactly the entity ids given below, and the automations go to automations.yaml.
+#
+# Placeholders (replace before use):
+#   <REGION>/<CHANNEL>   MQTT topic parts of your gateway
+#   TRAP_NODE_NUM        node number of the trap node as decimal ("from" in the MQTT JSON)
+#
+# How it works:
+#   1. Every text message "Falle ..." from the trap node stores the current time in
+#      input_datetime.fallenmelder_last_seen. Helpers keep their value across HA restarts.
+#   2. Every 15 minutes a check compares "now" with that time. If more than 13 h have passed,
+#      it sends "Fallenmelder ohne Lebenszeichen" via ntfy and stores the alarm time in
+#      input_datetime.fallenmelder_last_alarm.
+#   3. The alarm is sent once. It repeats only after REPEAT_HOURS (6 h) if still no message came.
+#   4. When the node is heard again after an alarm, a short "wieder da" message is sent.
+# 13 h = two status messages per day (06:00/18:00) plus 1 h margin. Without valid time the node
+# sends every 6 h, which also fits.
+#
+# Test: in the UI set input_datetime.fallenmelder_last_seen to 14 h ago; within 15 min the alarm
+# should arrive, and not again in the following hour.
+
+input_datetime:
+  fallenmelder_last_seen:
+    name: "Fallenmelder letzte Meldung"
+    has_date: true
+    has_time: true
+  fallenmelder_last_alarm:
+    name: "Fallenmelder letzter Lebenszeichen-Alarm"
+    has_date: true
+    has_time: true
+
+automation:
+  - alias: "Fallenmelder Lebenszeichen merken"
+    mode: queued
+    variables:
+      trap_node: 0 # <- TRAP_NODE_NUM
+    trigger:
+      - platform: mqtt
+        topic: "msh/<REGION>/2/json/<CHANNEL>/+"
+    condition:
+      - condition: template
+        value_template: >-
+          {{ trigger.payload_json.from == trap_node
+             and trigger.payload_json.type == 'text'
+             and (trigger.payload_json.payload.text | default('')).startswith('Falle ') }}
+    action:
+      # If an alarm was sent after the last message, report that the node is back.
+      - if:
+          - condition: template
+            value_template: >-
+              {{ (state_attr('input_datetime.fallenmelder_last_alarm', 'timestamp') or 0)
+                 > (state_attr('input_datetime.fallenmelder_last_seen', 'timestamp') or 0) }}
+        then:
+          - service: rest_command.ntfy_notify
+            data:
+              message: "✅ Fallenmelder wieder da: {{ trigger.payload_json.payload.text }}"
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.fallenmelder_last_seen
+        data:
+          timestamp: "{{ now().timestamp() }}"
+
+  - alias: "Fallenmelder ohne Lebenszeichen"
+    mode: single
+    variables:
+      max_silence_hours: 13
+      repeat_hours: 6
+    trigger:
+      - platform: time_pattern
+        minutes: "/15"
+    condition:
+      - condition: template
+        value_template: >-
+          {% set seen = state_attr('input_datetime.fallenmelder_last_seen', 'timestamp') or 0 %}
+          {% set alarm = state_attr('input_datetime.fallenmelder_last_alarm', 'timestamp') or 0 %}
+          {% set now_ts = now().timestamp() %}
+          {# seen > 86400: helper was set at least once (a fresh helper starts at 1970) #}
+          {{ seen > 86400
+             and now_ts - seen > max_silence_hours * 3600
+             and (alarm <= seen or now_ts - alarm > repeat_hours * 3600) }}
+    action:
+      - service: rest_command.ntfy_notify
+        data:
+          message: >-
+            ⚠️ Fallenmelder ohne Lebenszeichen seit
+            {{ ((now().timestamp() - state_attr('input_datetime.fallenmelder_last_seen', 'timestamp')) / 3600) | round(0) | int }} h
+            (letzte Meldung {{ states('input_datetime.fallenmelder_last_seen') }})
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.fallenmelder_last_alarm
+        data:
+          timestamp: "{{ now().timestamp() }}"

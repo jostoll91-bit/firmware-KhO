@@ -166,3 +166,14 @@ erst nach dem Commit feststeht.
 - Ergebnis: Fix der Zuordnung am Board bestätigt.
 - Commit: `a0fdfc0a6`.
 - Nachtrag: Die Meldungen sind über Gateway → MQTT → HomeAssistant → **ntfy** angekommen ✅ (Ende-zu-Ende).
+
+## 2026-11-24 – HA: Lebenszeichen-Alarm, Akku-Tests zurückgestellt
+- ntfy bestätigt: 🚨 bei `ZU`, ✅ bei `OFFEN`. Die echte HA-Automatisierung ist umgestellt (Nutzer).
+- Akku-Tests bis auf Weiteres zurückgestellt (kein Akku, nur USB-Betrieb). OPEN.md angepasst.
+- `homeassistant-example.yaml`: Kommentare zur Fallen-Regel (ZU vor `|` = Alarm, auch in Status/Start;
+  `Falle jetzt OFFEN` = ✅; sonst ℹ️) und zur Akku-Regel (Fallen-Knoten ausgeschlossen, mit echtem Akku Bedingung
+  entfernen). Echte Knotennummer im Rechenbeispiel durch eine erfundene ersetzt.
+- Neu `homeassistant-heartbeat-example.yaml` (HA-Package): `input_datetime` für letzte Meldung und letzten Alarm
+  (übersteht HA-Neustart), Prüfung alle 15 min, Alarm bei >13 h, Wiederholung frühestens nach 6 h,
+  "wieder da"-Meldung. YAML-Syntax geprüft, in HA nicht getestet.
+- Commit: dieser Commit.

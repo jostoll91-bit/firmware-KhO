@@ -3,7 +3,7 @@
 # Placeholders (replace before use):
 #   <REGION>/<CHANNEL>   MQTT topic parts of your gateway, e.g. msh/EU_868/2/json/MyChannel/+
 #   TRAP_NODE_NUM        node number of the trap node as decimal ("from" in the MQTT JSON),
-#                        e.g. !18610468 -> 409011304 (printf "%d\n" 0x18610468)
+#                        e.g. !12345678 -> 305419896 (printf "%d\n" 0x12345678)
 #   NODE_A_NUM, NODE_B_NUM  other nodes whose battery you want by name
 #
 # Messages sent by the module (TEXT_MESSAGE_APP, MQTT JSON type "text", text in payload.text):
@@ -14,6 +14,8 @@
 # Only the part before "|" is evaluated; the battery part may still change.
 # "ZU" anywhere before "|" (also in Status/Start messages) raises the alarm.
 
+# Battery report. The trap node is excluded: it runs on USB without a battery, so its battery
+# value is only noise. Once it runs on a real battery, remove the "from != trap_node" condition.
 - alias: "Akkustand-Meldung bei jeder Telemetrie"
   variables:
     trap_node: 0 # <- TRAP_NODE_NUM
@@ -41,6 +43,11 @@
             Akkustand unbekannter Knoten ({{ p.from }}): {{ p.payload.battery_level }}%
           {% endif %}
 
+# Trap messages. Only the part before "|" is evaluated:
+#   "ZU" in it      -> alarm (also "Falle Status: ZU" / "Falle Start: ZU", in case an event message was lost)
+#   "Falle jetzt OFFEN" -> trap armed again
+#   anything else   -> info (e.g. "Falle Status: OFFEN", "Falle Start: OFFEN")
+# Heartbeat alarm (no message for > 13 h): see homeassistant-heartbeat-example.yaml.
 - alias: "Fallenmelder"
   mode: queued # two messages shortly after each other are both delivered
   variables:

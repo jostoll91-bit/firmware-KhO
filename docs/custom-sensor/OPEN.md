@@ -1,10 +1,9 @@
 # Offene Punkte und Ideen
 
-## Nächste Tests
-- **HA-Automatisierung** auf Alarm bei `ZU` umstellen (Beispiel: `homeassistant-example.yaml`).
-- **Test mit echtem Akku** (Akku/USB-Text, siehe unten).
-
 ## Batterie / USB
+- **Test mit echtem Akku zurückgestellt (kein Akku verfügbar).** Alles läuft im USB-Betrieb. Der Akkuwert im Text
+  ist dabei Rauschen und nicht aussagekräftig. In HA ist der Fallen-Knoten deshalb von der Akku-Regel
+  ausgeschlossen (mit echtem Akku die Ausschluss-Bedingung entfernen).
 - **Ohne Akku wird ein Akku gemeldet.** Nur am USB zeigt die Firmware `battery hardware detected`, `usbPower=0`
   und Zufallswerte (49–94 %, 3,71–4,11 V). Darum steht in der Meldung `Akku ..%` statt `USB`. Vermutlich misst
   der ADC am offenen VBAT-Teiler (P0.31) nur Rauschen, und USB wird auf dem Kit nicht sicher erkannt.
@@ -13,14 +12,11 @@
 - Kanal-Sperre (öffentlicher Standardkanal) am Board noch nicht ausprobiert.
 
 ## HomeAssistant
-- Das Gateway empfängt die Meldungen, aber die Automatisierung reagiert noch nicht. Sie muss auf die neuen Texte
-  passen. **Alarm ist `ZU` (gefangen oder Kabelbruch), `OFFEN` ist der Normalzustand (scharf).** Texte z. B.
-  `Falle jetzt ZU (gefangen oder Kabelbruch)` / `Falle jetzt OFFEN`, dazu `Falle Status:` und `Falle Start:`. Teil hinter `|` (Akku/USB) nicht auswerten, der kann sich noch ändern.
-  Beispiel mit Platzhaltern: `homeassistant-example.yaml`.
-- **Lebenszeichen-Alarm (nach Schritt 3):** In HA alarmieren, wenn länger als **13 h** keine Meldung vom
-  Fallen-Knoten kam (Statusmeldungen alle 12 h, plus Puffer). Z. B. Zeitstempel der letzten `Falle `-Meldung in
-  einem `input_datetime` merken und per Zeit-Trigger prüfen. Achtung: Ohne gültige Zeit sendet der Knoten nur
-  alle 6 h, das passt auch in die 13 h.
+- Erledigt: Die Fallen-Automatisierung ist umgestellt, ntfy liefert 🚨 bei `ZU (gefangen oder Kabelbruch)` und ✅ bei
+  `Falle jetzt OFFEN`. Beispiel mit Platzhaltern: `homeassistant-example.yaml`.
+- **Lebenszeichen-Alarm:** Beispiel erstellt (`homeassistant-heartbeat-example.yaml`, >13 h ohne `Falle `-Meldung,
+  Zeitpunkt in `input_datetime`, Wiederholung frühestens nach 6 h, "wieder da"-Meldung). In der echten HA-Instanz
+  noch einrichten und testen.
 
 ## Messaufbau
 - **Logikanalyzer an D6 kann das Ergebnis verfälschen.** Der Pull-up hat nur 1 MOhm. Hat der Analyzer-Eingang
