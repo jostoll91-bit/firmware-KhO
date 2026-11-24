@@ -29,8 +29,11 @@ Senden/Zeitplan/Batterie (gemeinsam), aber nicht überengineeren.
 - Gerätevoraussetzung (Pflicht): `position.gps_mode = NOT_PRESENT`, denn D6 ist in der
   Kit-Variante GPS_TX. Sonst schaltet sich das Modul mit LOG_ERROR ab.
 - Externer 1-MOhm-Pull-up nach 3V3, daher pinMode(INPUT), KEIN INPUT_PULLUP
-- Logik: Pin HIGH = Kontakt offen = Falle offen (oder Kabelbruch). Pin LOW = Falle zu.
-  Ruhezustand (Falle zu) = ca. 3 uA, offen = 0.
+- Logik (`TRAP_CLOSED_MEANS_OPEN=1`, Standard):
+  Magnet am Reed = Kontakt geschlossen = Pin LOW = Falle OFFEN (scharf, nichts gefangen) = Normalzustand.
+  Magnet weg = Kontakt offen = Pin HIGH = Falle ZU (gefangen) oder Kabelbruch = Alarm.
+  Ruhestrom: scharf/LOW ca. 3 uA, gefangen/HIGH 0.
+  Texte: "OFFEN" bzw. "ZU (gefangen oder Kabelbruch)".
 - Debounce 200 ms, Auslösung per Interrupt (kein Dauer-Polling)
 - Bei Zustandswechsel sofort Meldung (Mindestabstand 10 s, dann nur Endzustand)
 - Statusmeldung 2x täglich: 06:00 und 18:00 Europe/Berlin

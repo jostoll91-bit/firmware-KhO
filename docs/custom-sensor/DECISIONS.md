@@ -20,9 +20,12 @@ Kurz und mit Begründung. Basis: Firmware v2.7.26, Board `seeed_xiao_nrf52840_ki
 - **GPS muss `NOT_PRESENT` sein.** D6 ist in der Default-Variante `GPS_TX_PIN`. Bei NOT_PRESENT wird kein GPS
   angelegt (main.cpp:890). Sonst schaltet sich das Modul mit einer Fehlermeldung ab.
 - **Externer 1-MOhm-Pull-up nach 3V3, `pinMode(INPUT)`.** Der interne Pull-up (~13 kOhm) würde bei geschlossenem
-  Kontakt ~250 µA ziehen. Mit 1 MOhm: Falle zu ≈ 3 µA, offen = 0.
-- **Logik: Pin HIGH = Kontakt offen = Falle OFFEN (oder Kabelbruch). Pin LOW = Falle ZU.** Ein Kabelbruch zeigt
-  sich also als "offen" und fällt auf. Umkehren mit `-DTRAP_CLOSED_MEANS_OPEN=1`.
+  Kontakt ~250 µA ziehen. Mit 1 MOhm: Falle scharf (Kontakt zu, Pin LOW) ≈ 3 µA, gefangen (Pin HIGH) = 0.
+- **Logik (korrigiert, `TRAP_CLOSED_MEANS_OPEN=1` ist Standard): Magnet am Reed = Kontakt geschlossen = Pin LOW =
+  Falle OFFEN (scharf). Magnet weg = Kontakt offen = Pin HIGH = Falle ZU (gefangen) oder Kabelbruch.**
+  Texte: `OFFEN` bzw. `ZU (gefangen oder Kabelbruch)`. Ein Kabelbruch löst also denselben Alarm aus wie ein Fang
+  und fällt sicher auf. Umkehren mit `-DTRAP_CLOSED_MEANS_OPEN=0`. Bis Schritt 3 war die Zuordnung vertauscht
+  (Standard 0), siehe DEVLOG.
 - **Interrupt (CHANGE) + 200 ms Debounce** statt Polling. Ein Zustand zählt erst, wenn er 200 ms stabil war.
   Eine Meldung gibt es nur, wenn er sich vom zuletzt gemeldeten Zustand unterscheidet.
 - **Flankenzähler `edgeCount` statt `bool edgePending`** zwischen ISR und Thread. Bei einem bool müsste der Thread

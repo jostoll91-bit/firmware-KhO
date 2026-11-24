@@ -120,7 +120,7 @@ erst nach dem Commit feststeht.
 - Neue Build-Flags mit Defaults: `CUSTOM_SENSOR_STATUS_HOUR_A/B` (mit `static_assert` A < B),
   `CUSTOM_SENSOR_FALLBACK_INTERVAL_MS`, `CUSTOM_SENSOR_BOOT_REPORT_DELAY_MS`.
 - `TrapSensorModule` unverändert.
-- Commit: dieser Commit.
+- Commit: `101ec07d0`.
 - Ergebnis: Build SUCCESS, keine Warnungen in den neuen Dateien, clang-format sauber. Nicht geflasht.
 
   | | Schritt 2 | Schritt 3 | Differenz |
@@ -129,3 +129,28 @@ erst nach dem Commit feststeht.
   | RAM (statisch) | 102 204 B | 102 204 B | 0 B |
 
   Freier Flash: noch ca. 89,2 kB.
+
+## 2026-11-24 – Board-Test Schritt 3 (nur USB, App anfangs nicht verbunden)
+- **(1) Ohne Zeit:** Startmeldung bei Uptime 65 s (`Falle Start: … `), Log-Zeiten `??:??:??`. Zeile
+  `no valid time, fallback every 6 h` im Start-Log nach dem Reset in (2) gesehen ✅.
+- **(2) Zeit gültig, dann Reset:** App verbunden → `set_time_only` (Uptime 158 s) → `time valid, schedule active`
+  um 13:54:57 (beim nächsten 60-s-Lauf) ✅. Nach einem Reset: `no valid time`, App verbindet neu, Startmeldung,
+  `schedule active`, **keine** `Status:`-Meldung, obwohl 06:00 vorbei war ✅ (nichts nachgeholt).
+- **(3) Zeitplan mit `HOUR_A=15`, `HOUR_B=16`** (nur per `PLATFORMIO_BUILD_FLAGS`, nicht eingecheckt; 14 war wegen
+  Build-/Flash-Dauer zu knapp): `Falle Status:` um 15:00:57 und 16:00:57, je genau eine ✅.
+- Rückflash auf 6/18 erfolgreich, Log-Bestätigung entfällt, weil direkt danach der Zustands-Fix kam (siehe unten).
+- Ergebnis: Schritt 3 am Board bestätigt.
+
+## 2026-11-24 – Fix: Zustände vertauscht
+- **Die Zuordnung war vertauscht.** Richtig: Magnet am Reed = Kontakt zu = Pin LOW = Falle **OFFEN** (scharf,
+  Normalzustand). Magnet weg = Kontakt offen = Pin HIGH = Falle **ZU (gefangen oder Kabelbruch)** = Alarm.
+- `TRAP_CLOSED_MEANS_OPEN` Standard 0 → **1**. Texte: `OFFEN` bzw. `ZU (gefangen oder Kabelbruch)` (gilt für
+  Ereignis-, Start- und Statusmeldung). Verdrahtungs-/Ruhestrom-Kommentar im Header angepasst
+  (scharf/LOW ≈ 3 µA, gefangen/HIGH 0).
+- HA-Beispiel: Alarm bei `ZU`, `OFFEN` = wieder scharf. CLAUDE.md, PLAN, DECISIONS, OPEN angepasst.
+- **Hinweis zu den Board-Tests Schritt 1–3:** Sie liefen mit der **alten** Zuordnung. Wo dort `OFFEN`/`ZU` steht,
+  ist der Pegel gemeint (OFFEN = Pin HIGH, ZU = Pin LOW). Erkennung, Entprellung, Mindestabstand und Kabelbruch
+  hängen nicht von der Zuordnung ab und gelten weiter. Der Zeitplan-Test (15:00/16:00) ist unabhängig und gilt.
+- Stunden geprüft: `CUSTOM_SENSOR_STATUS_HOUR_A/B` = 6/18 im Header, Test-Stunden nirgends eingecheckt.
+- Build: SUCCESS, Flash 725 896 B (−16 B ggü. Schritt 3), RAM unverändert, clang-format sauber.
+- Commit: dieser Commit.

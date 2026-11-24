@@ -7,11 +7,12 @@
 #   NODE_A_NUM, NODE_B_NUM  other nodes whose battery you want by name
 #
 # Messages sent by the module (TEXT_MESSAGE_APP, MQTT JSON type "text", text in payload.text):
-#   Falle jetzt ZU | Akku 87% 4.05V
-#   Falle jetzt OFFEN (oder Kabelbruch) | USB
-#   Falle Status: ZU | ...     (06:00 and 18:00 Europe/Berlin, every 6 h without valid time)
-#   Falle Start: ZU | ...      (once, 60 s after boot)
+#   Falle jetzt ZU (gefangen oder Kabelbruch) | Akku 87% 4.05V   <- ALARM (caught or broken wire)
+#   Falle jetzt OFFEN | USB                                         <- normal state again (armed)
+#   Falle Status: OFFEN | ...  (06:00 and 18:00 Europe/Berlin, every 6 h without valid time)
+#   Falle Start: OFFEN | ...   (once, 60 s after boot)
 # Only the part before "|" is evaluated; the battery part may still change.
+# "ZU" anywhere before "|" (also in Status/Start messages) raises the alarm.
 
 - alias: "Akkustand-Meldung bei jeder Telemetrie"
   variables:
@@ -60,10 +61,10 @@
     - service: rest_command.ntfy_notify
       data:
         message: >-
-          {% if 'OFFEN' in state %}
+          {% if 'ZU' in state %}
             🚨 Fallenmelder: {{ state }}
-          {% elif state.startswith('Falle jetzt ZU') %}
-            ✅ Fallenmelder: Falle wieder zu ({{ text }})
+          {% elif state.startswith('Falle jetzt OFFEN') %}
+            ✅ Fallenmelder: Falle wieder scharf ({{ text }})
           {% else %}
             ℹ️ Fallenmelder: {{ text }}
           {% endif %}

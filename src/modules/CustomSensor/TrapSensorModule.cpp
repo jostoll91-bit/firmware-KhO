@@ -92,8 +92,12 @@ int32_t TrapSensorModule::sensorWakeMs()
 void TrapSensorModule::formatState(char *buf, size_t len)
 {
     bool open = (reportedPinHigh == pinHighMeansOpen());
-    // A broken wire looks like an open contact (pin pulled HIGH).
-    snprintf(buf, len, "%s%s", open ? "OFFEN" : "ZU", reportedPinHigh ? " (oder Kabelbruch)" : "");
+    // A broken wire looks like an open contact (pin pulled HIGH by the external pull-up).
+    // Default wiring: pin LOW -> "OFFEN", pin HIGH -> "ZU (gefangen oder Kabelbruch)".
+    if (open)
+        snprintf(buf, len, "OFFEN%s", reportedPinHigh ? " (oder Kabelbruch)" : "");
+    else
+        snprintf(buf, len, "ZU (gefangen%s)", reportedPinHigh ? " oder Kabelbruch" : "");
 }
 
 #endif // CUSTOM_SENSOR_TRAP

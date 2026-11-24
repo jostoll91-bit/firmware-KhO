@@ -1,9 +1,8 @@
 # Offene Punkte und Ideen
 
 ## Nächste Tests
-- **Board-Test Schritt 3** (siehe PLAN.md): Startmeldung nach 60 s, Fallback-Log ohne Zeit (ohne App-Verbindung!),
-  `time valid, schedule active` nach GPS-Position vom Solarknoten oder App-Verbindung, Zeitplan-Test mit
-  temporären Stunden-Flags.
+- **Flash mit Fix der Zustände + 6/18**: Magnet dran → `OFFEN`, Magnet weg → `ZU (gefangen oder Kabelbruch)`,
+  `schedule active (06:00 and 18:00 Europe/Berlin)` nach gültiger Zeit. HA-Automatisierung auf Alarm bei ZU umstellen.
 
 ## Batterie / USB
 - **Ohne Akku wird ein Akku gemeldet.** Nur am USB zeigt die Firmware `battery hardware detected`, `usbPower=0`
@@ -15,8 +14,8 @@
 
 ## HomeAssistant
 - Das Gateway empfängt die Meldungen, aber die Automatisierung reagiert noch nicht. Sie muss auf die neuen Texte
-  passen, z. B. beginnt mit `Falle jetzt OFFEN` / `Falle jetzt ZU`, ab Schritt 3 auch `Falle Status:` und
-  `Falle Start:`. Teil hinter `|` (Akku/USB) nicht auswerten, der kann sich noch ändern.
+  passen. **Alarm ist `ZU` (gefangen oder Kabelbruch), `OFFEN` ist der Normalzustand (scharf).** Texte z. B.
+  `Falle jetzt ZU (gefangen oder Kabelbruch)` / `Falle jetzt OFFEN`, dazu `Falle Status:` und `Falle Start:`. Teil hinter `|` (Akku/USB) nicht auswerten, der kann sich noch ändern.
   Beispiel mit Platzhaltern: `homeassistant-example.yaml`.
 - **Lebenszeichen-Alarm (nach Schritt 3):** In HA alarmieren, wenn länger als **13 h** keine Meldung vom
   Fallen-Knoten kam (Statusmeldungen alle 12 h, plus Puffer). Z. B. Zeitstempel der letzten `Falle `-Meldung in
@@ -26,7 +25,8 @@
 ## Messaufbau
 - **Logikanalyzer an D6 kann das Ergebnis verfälschen.** Der Pull-up hat nur 1 MOhm. Hat der Analyzer-Eingang
   einen Widerstand nach Masse (oft 100 kOhm–1 MOhm), liegt der Pin bei offenem Kontakt unter der HIGH-Schwelle
-  und wird als ZU gelesen. Vor dem Messen prüfen, ob "offen" weiter als OFFEN erkannt wird.
+  und wird als LOW gelesen, also als `OFFEN` (scharf) statt `ZU (gefangen oder Kabelbruch)`. Ein Fang würde
+  dann übersehen. Vor dem Messen prüfen, ob "Magnet weg" weiter als ZU erkannt wird.
 
 ## Energie
 - **Strommessung der Gesamtschaltung**, bevor Batterie und Gehäuse gewählt werden. Der Funk bleibt im Leerlauf auf

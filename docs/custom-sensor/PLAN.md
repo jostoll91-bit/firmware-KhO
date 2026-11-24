@@ -1,8 +1,9 @@
 # Plan Schritt 2 und 3
 
-**Status:** Schritt 2 umgesetzt (`5b29950b4`) und am Board bestätigt. Offen bis zum Test mit echtem Akku: der
-Akku/USB-Text (siehe OPEN.md). **Schritt 3 umgesetzt und gebaut, Board-Test Schritt 3 steht aus** (siehe
-"Test Schritt 3", vorher fragen).
+**Status:** Schritt 2 und 3 umgesetzt und am Board bestätigt. Danach Fix der vertauschten Zustände
+(`TRAP_CLOSED_MEANS_OPEN=1`). **Offen: ein Flash mit Fix + 6/18 und Log-Prüfung** (Magnet dran → OFFEN, Magnet weg →
+ZU (gefangen oder Kabelbruch), `schedule active (06:00 and 18:00 Europe/Berlin)`). Akku/USB-Text offen bis zum Test
+mit echtem Akku.
 
 Freigegebener Plan, so aufgeschrieben, dass man ihn ohne den Chatverlauf umsetzen kann. Stand nach Schritt 1
 (Commit `e1743618d`). Alle Fundstellen gelten für v2.7.26. Vor der Benutzung trotzdem im Quelltext gegenprüfen.
@@ -14,7 +15,8 @@ Freigegebener Plan, so aufgeschrieben, dass man ihn ohne den Chatverlauf umsetze
   ist `min(sensorWakeMs(), CUSTOM_SENSOR_IDLE_INTERVAL_MS = 60 s)`. `CUSTOM_SENSOR_NAME` ist standardmäßig `"Falle"`.
 - `src/modules/CustomSensor/TrapSensorModule.{h,cpp}`: D6, `INPUT`, ISR auf CHANGE, 200 ms Debounce über
   `volatile lastEdgeMs` und `volatile edgeCount` plus `handledEdgeCount`, GPS-Prüfung und Pin-Map-Log.
-  `formatState()` liefert `"ZU"` oder `"OFFEN (oder Kabelbruch)"`.
+  `formatState()` liefert `"OFFEN"` (Pin LOW, scharf) oder `"ZU (gefangen oder Kabelbruch)"` (Pin HIGH).
+  Zuordnung korrigiert nach Schritt 3 (`TRAP_CLOSED_MEANS_OPEN=1`), siehe DECISIONS.md.
 - Registrierung: `src/modules/Modules.cpp` hinter `#if CUSTOM_SENSOR_TRAP` (Include und
   `trapSensorModule = new TrapSensorModule();` nach GenericThreadModule).
   Build-Flag `-DCUSTOM_SENSOR_TRAP=1` in `variants/nrf52840/seeed_xiao_nrf52840_kit/platformio.ini`.
@@ -64,10 +66,10 @@ Freigegebener Plan, so aufgeschrieben, dass man ihn ohne den Chatverlauf umsetze
     `getBatteryVoltageMv()`.
   - sonst `"USB"`.
 - Beispiele:
-  - `Falle jetzt ZU | Akku 87% 4.05V`
-  - `Falle jetzt OFFEN (oder Kabelbruch) | USB`
-  - `Falle Status: ZU | Akku 87% 4.05V`
-  - `Falle Start: ZU | Akku 87% 4.05V`
+  - `Falle jetzt ZU (gefangen oder Kabelbruch) | Akku 87% 4.05V`  (Alarm)
+  - `Falle jetzt OFFEN | USB`  (wieder scharf)
+  - `Falle Status: OFFEN | Akku 87% 4.05V`
+  - `Falle Start: OFFEN | Akku 87% 4.05V`
 - Puffer z. B. `char msg[120]` mit `snprintf`.
 
 ### Umsetzung Schritt 2 (so gebaut, kleine Präzisierungen zum Plan)

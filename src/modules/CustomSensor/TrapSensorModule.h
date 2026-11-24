@@ -8,8 +8,10 @@
  * Trap sensor (reed contact) wiring, default configuration:
  *   - Reed contact between TRAP_SENSOR_PIN and GND.
  *   - External 1 MOhm pull-up from TRAP_SENSOR_PIN to 3V3 (internal pull-up is NOT used).
- *   - Contact closed -> pin LOW  -> trap CLOSED. Quiescent current ~3.3 uA (3.3 V / 1 MOhm).
- *   - Contact open   -> pin HIGH -> trap OPEN (or broken wire). Quiescent current ~0.
+ *   - Magnet at the reed -> contact closed -> pin LOW  -> trap OPEN (armed, nothing caught).
+ *     This is the normal resting state. Quiescent current ~3.3 uA (3.3 V / 1 MOhm).
+ *   - Magnet away        -> contact open   -> pin HIGH -> trap CLOSED (caught) or broken wire.
+ *     Quiescent current ~0. A broken wire therefore raises the same alarm as a catch.
  */
 
 // Arduino pin number (NOT the nRF GPIO number). D6 maps to P1.11 (= GPIO 43) via g_ADigitalPinMap.
@@ -22,9 +24,10 @@
 #define TRAP_DEBOUNCE_MS 200
 #endif
 
-// 0 (default): pin HIGH = trap open. 1: inverted, pin LOW (contact closed) = trap open.
+// 1 (default): contact closed (pin LOW) = trap open/armed, pin HIGH = trap closed (caught).
+// 0: inverted, pin HIGH = trap open.
 #ifndef TRAP_CLOSED_MEANS_OPEN
-#define TRAP_CLOSED_MEANS_OPEN 0
+#define TRAP_CLOSED_MEANS_OPEN 1
 #endif
 
 class TrapSensorModule : public CustomSensorModule
@@ -43,7 +46,7 @@ class TrapSensorModule : public CustomSensorModule
     static bool pinIsHigh();
     static bool pinHighMeansOpen() { return !TRAP_CLOSED_MEANS_OPEN; }
 
-    bool reportedPinHigh = false; // last debounced (reported) pin level
+    bool reportedPinHigh = false;  // last debounced (reported) pin level
     uint32_t handledEdgeCount = 0; // edgeCount value already processed by the thread
 
     // Written by the ISR, read by the thread. A counter instead of a bool flag:
