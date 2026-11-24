@@ -181,4 +181,13 @@ erst nach dem Commit feststeht.
 ## 2026-11-24 – Akku-Text: Idee verworfen
 - Akku-Teil im Text abschaltbar/plausibilisiert machen: verworfen (kein Akku, Wert im USB-Betrieb nicht
   ausgewertet; bei echtem Akku neu bewerten). In DECISIONS.md unter "Verworfene Ideen", OPEN.md verweist darauf.
+- Commit: `e988a7499`.
+
+## 2026-11-24 – HA: Lebenszeichen eingerichtet, Idee mehrere Fallen
+- Lebenszeichen-Alarm in der echten HA-Instanz eingerichtet (Helfer in `configuration.yaml`, Automationen in
+  `automations.yaml`). Dabei zwei Fehler in der HA-Konfiguration behoben (Nutzer): verirrte Topic-Zeilen in der
+  Fallen-Automation, Template-Sensor `S001 Akkustand` stand unter `device_tracker:` statt `sensor:`
+  (Knotennummer dort auf 409011304 korrigiert). Konfigurationsprüfung grün, vier Automationen sichtbar.
+  Alarm selbst noch nicht getestet.
+- OPEN.md: Vorgehen für mehrere Fallen notiert (eine Automation mit Liste, Lebenszeichen als Blueprint).
 - Commit: dieser Commit.

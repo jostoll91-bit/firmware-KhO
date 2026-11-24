@@ -16,7 +16,14 @@
   `Falle jetzt OFFEN`. Beispiel mit Platzhaltern: `homeassistant-example.yaml`.
 - **Lebenszeichen-Alarm:** Beispiel erstellt (`homeassistant-heartbeat-example.yaml`, >13 h ohne `Falle `-Meldung,
   Zeitpunkt in `input_datetime`, Wiederholung frühestens nach 6 h, "wieder da"-Meldung). In der echten HA-Instanz
-  noch einrichten und testen.
+  eingerichtet (Helfer in `configuration.yaml`, Automationen in `automations.yaml`), noch nicht getestet.
+  Test: `input_datetime.fallenmelder_last_seen` auf vor 14 h setzen, Alarm muss innerhalb von 15 min kommen.
+- **Mehrere Fallen (erst ab der zweiten Falle umbauen):** Unterscheidung über `from` (Knotennummer).
+  - Fallen-Meldung: *eine* Automation mit Liste `traps: {<Knotennummer>: "<Name>"}` in `variables`,
+    Bedingung `from in traps`, Name per `traps[from]` in den ntfy-Text.
+  - Lebenszeichen: braucht pro Falle zwei eigene `input_datetime`-Helfer. Als HA-**Blueprint** schreiben
+    und pro Falle eine Instanz anlegen (Eingaben: Knotennummer, Name, die zwei Helfer).
+  - Mit zwei echten Knoten testen.
 
 ## Messaufbau
 - **Logikanalyzer an D6 kann das Ergebnis verfälschen.** Der Pull-up hat nur 1 MOhm. Hat der Analyzer-Eingang
