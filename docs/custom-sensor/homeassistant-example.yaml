@@ -1,0 +1,69 @@
+# Home Assistant example automations for the custom trap sensor module.
+#
+# Placeholders (replace before use):
+#   <REGION>/<CHANNEL>   MQTT topic parts of your gateway, e.g. msh/EU_868/2/json/MyChannel/+
+#   TRAP_NODE_NUM        node number of the trap node as decimal ("from" in the MQTT JSON),
+#                        e.g. !18610468 -> 409011304 (printf "%d\n" 0x18610468)
+#   NODE_A_NUM, NODE_B_NUM  other nodes whose battery you want by name
+#
+# Messages sent by the module (TEXT_MESSAGE_APP, MQTT JSON type "text", text in payload.text):
+#   Falle jetzt ZU | Akku 87% 4.05V
+#   Falle jetzt OFFEN (oder Kabelbruch) | USB
+#   Falle Status: ZU | ...     (06:00 and 18:00 Europe/Berlin, every 6 h without valid time)
+#   Falle Start: ZU | ...      (once, 60 s after boot)
+# Only the part before "|" is evaluated; the battery part may still change.
+
+- alias: "Akkustand-Meldung bei jeder Telemetrie"
+  variables:
+    trap_node: 0 # <- TRAP_NODE_NUM
+    node_a: 0 # <- NODE_A_NUM
+    node_b: 0 # <- NODE_B_NUM
+  trigger:
+    - platform: mqtt
+      topic: "msh/<REGION>/2/json/<CHANNEL>/+"
+  condition:
+    - condition: template
+      value_template: >-
+        {{ trigger.payload_json.type == 'telemetry'
+           and 'battery_level' in trigger.payload_json.payload
+           and trigger.payload_json.from != trap_node }}
+  action:
+    - service: rest_command.ntfy_notify
+      data:
+        message: >-
+          {% set p = trigger.payload_json %}
+          {% if p.from == node_a %}
+            Akkustand A: {{ p.payload.battery_level }}%
+          {% elif p.from == node_b %}
+            Akkustand B: {{ p.payload.battery_level }}%
+          {% else %}
+            Akkustand unbekannter Knoten ({{ p.from }}): {{ p.payload.battery_level }}%
+          {% endif %}
+
+- alias: "Fallenmelder"
+  mode: queued # two messages shortly after each other are both delivered
+  variables:
+    trap_node: 0 # <- TRAP_NODE_NUM
+  trigger:
+    - platform: mqtt
+      topic: "msh/<REGION>/2/json/<CHANNEL>/+"
+  condition:
+    - condition: template
+      value_template: >-
+        {{ trigger.payload_json.from == trap_node
+           and trigger.payload_json.type == 'text'
+           and (trigger.payload_json.payload.text | default('')).startswith('Falle ') }}
+  action:
+    - variables:
+        text: "{{ trigger.payload_json.payload.text }}"
+        state: "{{ (text.split('|') | first) | trim }}"
+    - service: rest_command.ntfy_notify
+      data:
+        message: >-
+          {% if 'OFFEN' in state %}
+            🚨 Fallenmelder: {{ state }}
+          {% elif state.startswith('Falle jetzt ZU') %}
+            ✅ Fallenmelder: Falle wieder zu ({{ text }})
+          {% else %}
+            ℹ️ Fallenmelder: {{ text }}
+          {% endif %}

@@ -12,6 +12,11 @@
 - Das Gateway empfängt die Meldungen, aber die Automatisierung reagiert noch nicht. Sie muss auf die neuen Texte
   passen, z. B. beginnt mit `Falle jetzt OFFEN` / `Falle jetzt ZU`, ab Schritt 3 auch `Falle Status:` und
   `Falle Start:`. Teil hinter `|` (Akku/USB) nicht auswerten, der kann sich noch ändern.
+  Beispiel mit Platzhaltern: `homeassistant-example.yaml`.
+- **Lebenszeichen-Alarm (nach Schritt 3):** In HA alarmieren, wenn länger als **13 h** keine Meldung vom
+  Fallen-Knoten kam (Statusmeldungen alle 12 h, plus Puffer). Z. B. Zeitstempel der letzten `Falle `-Meldung in
+  einem `input_datetime` merken und per Zeit-Trigger prüfen. Achtung: Ohne gültige Zeit sendet der Knoten nur
+  alle 6 h, das passt auch in die 13 h.
 
 ## Messaufbau
 - **Logikanalyzer an D6 kann das Ergebnis verfälschen.** Der Pull-up hat nur 1 MOhm. Hat der Analyzer-Eingang

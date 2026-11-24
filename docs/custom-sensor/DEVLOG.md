@@ -101,4 +101,10 @@ erst nach dem Commit feststeht.
 
 ## 2026-11-24 – Nachtrag Board-Test Schritt 2
 - Ankunft am Gateway bestätigt, HomeAssistant-Automatisierung als offenen Punkt aufgenommen.
+- Commit: `f776f4485`.
+
+## 2026-11-24 – HomeAssistant-Beispiel
+- `homeassistant-example.yaml`: Akkustand-Regel ohne Fallen-Knoten, Fallen-Regel (Typ `text`, Text beginnt mit
+  `Falle `, OFFEN-Prüfung nur auf den Teil vor `|`, `mode: queued`). Platzhalter statt Knotennummern und Kanal.
+- OPEN.md: Lebenszeichen-Alarm (>13 h ohne Meldung) für nach Schritt 3.
 - Commit: dieser Commit.
