@@ -25,8 +25,12 @@ Kurz und mit Begründung. Basis: Firmware v2.7.26, Board `seeed_xiao_nrf52840_ki
   sich also als "offen" und fällt auf. Umkehren mit `-DTRAP_CLOSED_MEANS_OPEN=1`.
 - **Interrupt (CHANGE) + 200 ms Debounce** statt Polling. Ein Zustand zählt erst, wenn er 200 ms stabil war.
   Eine Meldung gibt es nur, wenn er sich vom zuletzt gemeldeten Zustand unterscheidet.
-- **Flankenzähler statt bool-Flag** zwischen ISR und Thread, damit keine Flanke durch eine Race-Condition
-  verloren geht. Beide Variablen sind `volatile`.
+- **Flankenzähler `edgeCount` statt `bool edgePending`** zwischen ISR und Thread. Bei einem bool müsste der Thread
+  das Flag zurücksetzen, und eine Flanke genau in diesem Moment ginge verloren. Beim Zähler schreibt nur der ISR.
+  Der Thread merkt sich `handledEdgeCount`. `edgeCount` und `lastEdgeMs` sind `volatile`.
+- **Restrisiko, bewusst akzeptiert:** `OSThread::run()` setzt nach `runOnce()` das Intervall (OSThread.cpp:96).
+  Ein ISR in den paar Takten zwischen `sensorWakeMs()` und diesem Setzen würde erst beim nächsten Weckzeitpunkt
+  bearbeitet (≤60 s). Der Zustand geht nicht verloren, die Meldung kommt nur verspätet.
 
 ## Senden
 - **Textnachricht (TEXT_MESSAGE_APP), Broadcast, Primary-Channel**, damit der Zuhause-Knoten ohne Anpassung
@@ -35,13 +39,16 @@ Kurz und mit Begründung. Basis: Firmware v2.7.26, Board `seeed_xiao_nrf52840_ki
   flatternder Kontakt das Mesh nicht flutet.
 - **Kanal-Sperre:** Ist der Primary-Channel der öffentliche Standardkanal (Standard-PSK + Preset-Name, z. B.
   "LongFast"), wird nicht gesendet. Es gibt eine deutliche Warnung im Log.
+- **`want_ack=false` in v1.** Bei Broadcasts würde `want_ack=true` nur bis zum ersten Hop wiederholen
+  (Details in OPEN.md, Zustellsicherheit). Kandidat für v1.1.
 - **Batterie** aus `powerStatus` (wird alle 20 s aktualisiert). Ohne erkannten Akku steht "USB" im Text.
 
 ## Zeit
 - **Zeit nur aus dem Mesh:** v2.7.26 übernimmt Mesh-Zeit nur aus Positions-Paketen mit echtem GPS
   (`location_source >= LOC_INTERNAL`). Der Solarknoten hat GPS.
 - **Europe/Berlin wird im Code aus UTC berechnet** (EU-Sommerzeitregel). So hängt es nicht von `config.device.tzdef`
-  ab und ändert keine globalen Einstellungen.
+  ab und ändert keine globalen Einstellungen. Bestätigt durch den Board-Test: Im Gerät steht
+  `CET-1CEST,M3.4.0/2,M10.4.0/3` (4. statt letzter Sonntag). Das wäre in manchen Jahren eine Woche falsch.
 - **Statusmeldung 06:00 und 18:00.** Verpasste Termine werden nicht nachgeholt.
 - **Fallback ohne gültige Zeit:** Statusmeldung alle 6 h ab Boot.
 
