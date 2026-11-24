@@ -164,4 +164,5 @@ erst nach dem Commit feststeht.
   - 16:27:07 Magnet ran → `Falle jetzt OFFEN` sofort ✅
   - 16:27:08/09 kurz ZU/OFFEN (Nachwackeln) in der Pause, 16:27:17 `equals last sent state, no message` ✅
 - Ergebnis: Fix der Zuordnung am Board bestätigt.
-- Commit: dieser Commit.
+- Commit: `a0fdfc0a6`.
+- Nachtrag: Die Meldungen sind über Gateway → MQTT → HomeAssistant → **ntfy** angekommen ✅ (Ende-zu-Ende).
