@@ -47,4 +47,9 @@ erst nach dem Commit feststeht.
 
 ## 2026-11-24 – Docs vor /clear
 - PLAN.md (Plan Schritt 2 und 3) und `tools/serlog.py` angelegt, DEVLOG/DECISIONS/OPEN ergänzt.
+- Commit: `468262ab4`.
+
+## 2026-11-24 – CLAUDE.md eingecheckt
+- CLAUDE.md ergänzt: Einstieg über DEVLOG/PLAN, D6-Zuordnung bestätigt, gps_mode NOT_PRESENT als Pflicht,
+  Log über `tools/serlog.py` statt `pio device monitor`, PLAN.md als vierte Doku-Datei. Erstmals versioniert.
 - Commit: dieser Commit (Hash trägt Schritt 2 nach).
