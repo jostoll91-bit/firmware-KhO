@@ -1,7 +1,7 @@
 # Plan Schritt 2 und 3
 
-**Status:** Schritt 2 umgesetzt (`5b29950b4`) und am Board getestet: Wechsel, Wedeln und Kabelbruch OK. Offen ist
-nur der Akku/USB-Text (ohne Akku wird ein Akku gemeldet, siehe OPEN.md). **Nächster Schritt: Schritt 3.**
+**Status:** Schritt 2 umgesetzt (`5b29950b4`) und am Board bestätigt: Wechsel, Wedeln, Kabelbruch OK, Ankunft am Gateway
+bestätigt. Offen bis zum Test mit echtem Akku: der Akku/USB-Text (ohne Akku wird ein Akku gemeldet, siehe OPEN.md). **Nächster Schritt: Schritt 3, erst nach OK des Nutzers.**
 
 Freigegebener Plan, so aufgeschrieben, dass man ihn ohne den Chatverlauf umsetzen kann. Stand nach Schritt 1
 (Commit `e1743618d`). Alle Fundstellen gelten für v2.7.26. Vor der Benutzung trotzdem im Quelltext gegenprüfen.

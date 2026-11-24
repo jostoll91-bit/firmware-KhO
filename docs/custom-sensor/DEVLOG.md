@@ -94,7 +94,11 @@ erst nach dem Commit feststeht.
 - **Akku/USB ❌**: Nur am USB ohne Akku steht trotzdem `Akku ..% x.xxV`, der Wert springt zwischen 49 % / 3,71 V
   und 94 % / 4,11 V (`battery hardware detected`, `usbPower=0`). Fehlmessung des offenen VBAT-Teilers, nicht
   unser Code. Siehe OPEN.md.
-- Ankunft beim Zuhause-Knoten: im Log nur die Weiterleitung durch einen Nachbarn gesehen, vom Nutzer nicht
-  einzeln bestätigt.
-- Ergebnis: Schritt 2 am Board abgenommen, außer USB-Erkennung (offener Punkt).
+- Ankunft: Das Gateway (Zuhause-Knoten) hat die Meldungen bekommen ✅. HomeAssistant hat nicht reagiert, die
+  Automatisierung muss erst an den neuen Text angepasst werden (Nutzer, außerhalb der Firmware).
+- Ergebnis: Schritt 2 am Board bestätigt. Akku/USB bleibt offen bis zum Test mit echtem Akku.
+- Commit: `8c7a6d358`.
+
+## 2026-11-24 – Nachtrag Board-Test Schritt 2
+- Ankunft am Gateway bestätigt, HomeAssistant-Automatisierung als offenen Punkt aufgenommen.
 - Commit: dieser Commit.

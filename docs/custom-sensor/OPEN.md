@@ -8,6 +8,11 @@
   in `sendReport()` (z. B. stark springende Werte → "Akku ?"). Erst entscheiden, wenn ein Akku dran ist.
 - Kanal-Sperre (öffentlicher Standardkanal) am Board noch nicht ausprobiert.
 
+## HomeAssistant
+- Das Gateway empfängt die Meldungen, aber die Automatisierung reagiert noch nicht. Sie muss auf die neuen Texte
+  passen, z. B. beginnt mit `Falle jetzt OFFEN` / `Falle jetzt ZU`, ab Schritt 3 auch `Falle Status:` und
+  `Falle Start:`. Teil hinter `|` (Akku/USB) nicht auswerten, der kann sich noch ändern.
+
 ## Messaufbau
 - **Logikanalyzer an D6 kann das Ergebnis verfälschen.** Der Pull-up hat nur 1 MOhm. Hat der Analyzer-Eingang
   einen Widerstand nach Masse (oft 100 kOhm–1 MOhm), liegt der Pin bei offenem Kontakt unter der HIGH-Schwelle
