@@ -107,4 +107,25 @@ erst nach dem Commit feststeht.
 - `homeassistant-example.yaml`: Akkustand-Regel ohne Fallen-Knoten, Fallen-Regel (Typ `text`, Text beginnt mit
   `Falle `, OFFEN-Prüfung nur auf den Teil vor `|`, `mode: queued`). Platzhalter statt Knotennummern und Kanal.
 - OPEN.md: Lebenszeichen-Alarm (>13 h ohne Meldung) für nach Schritt 3.
+- Commit: `dbcac98f1`.
+
+## 2026-11-24 – Schritt 3: Zeitplan
+- `src/modules/CustomSensor/BerlinTime.h` (neu, header-only, ohne Firmware-Abhängigkeiten): Tage-Rechnung nach
+  Howard Hinnant, `berlinOffsetSecs(utc)` nach EU-Regel (letzter Sonntag März/Oktober, 01:00 UTC).
+  Auf dem PC gegen die Zeitzonen-Datenbank geprüft: 2024–2040 alle 15 min (596 160 Zeitpunkte), 0 Abweichungen,
+  Umstellungen 2026 sekundengenau.
+- `CustomSensorModule`: Startmeldung `Falle Start: …` 60 s nach dem Setup, Statusmeldung `Falle Status: …`
+  06:00/18:00 Berlin (Slot-Logik, nichts nachholen), ohne gültige Zeit alle 6 h ab Startmeldung.
+  Logs: `no valid time, fallback every 6 h` / `time valid, schedule active (06:00 and 18:00 Europe/Berlin)`.
+- Neue Build-Flags mit Defaults: `CUSTOM_SENSOR_STATUS_HOUR_A/B` (mit `static_assert` A < B),
+  `CUSTOM_SENSOR_FALLBACK_INTERVAL_MS`, `CUSTOM_SENSOR_BOOT_REPORT_DELAY_MS`.
+- `TrapSensorModule` unverändert.
 - Commit: dieser Commit.
+- Ergebnis: Build SUCCESS, keine Warnungen in den neuen Dateien, clang-format sauber. Nicht geflasht.
+
+  | | Schritt 2 | Schritt 3 | Differenz |
+  |---|---|---|---|
+  | Flash | 725 064 B (89,0 %) | 725 912 B (89,1 %) | **+848 B** |
+  | RAM (statisch) | 102 204 B | 102 204 B | 0 B |
+
+  Freier Flash: noch ca. 89,2 kB.

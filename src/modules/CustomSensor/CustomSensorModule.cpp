@@ -2,8 +2,10 @@
 
 #if CUSTOM_SENSOR_TRAP
 
+#include "BerlinTime.h"
 #include "MeshService.h"
 #include "PowerStatus.h"
+#include "RTC.h"
 #include "Router.h"
 #include "mesh/Channels.h"
 #include <string.h>
@@ -79,6 +81,60 @@ bool CustomSensorModule::sendEventIfChanged()
     return true;
 }
 
+void CustomSensorModule::handleSchedule()
+{
+    // Start message, once, a while after setup.
+    if (bootReportPending && (int32_t)(millis() - bootReportDueMs) >= 0) {
+        bootReportPending = false;
+        sendReport("Start:");
+        lastStatusMs = millis(); // the fallback interval counts from here
+    }
+
+    // 0 while the time is not valid. Mesh time only comes from GPS positions (solar node).
+    uint32_t utc = getValidTime(RTCQualityFromNet);
+    if (utc == 0) {
+        if (timeMode != 0) {
+            timeMode = 0;
+            LOG_INFO("%s: no valid time, fallback every %lu h", CUSTOM_SENSOR_NAME,
+                     (unsigned long)(CUSTOM_SENSOR_FALLBACK_INTERVAL_MS / 3600000UL));
+        }
+        lastSlot = -1;
+        if ((uint32_t)(millis() - lastStatusMs) >= CUSTOM_SENSOR_FALLBACK_INTERVAL_MS) {
+            sendReport("Status:");
+            lastStatusMs = millis();
+        }
+        return;
+    }
+
+    // Local Berlin time -> index of the last passed status time ("slot"), two per day.
+    uint32_t local = utc + berlintime::berlinOffsetSecs(utc);
+    int32_t day = (int32_t)(local / 86400);
+    uint32_t sec = local % 86400;
+    int32_t slot;
+    if (sec >= CUSTOM_SENSOR_STATUS_HOUR_B * 3600UL)
+        slot = day * 2 + 1;
+    else if (sec >= CUSTOM_SENSOR_STATUS_HOUR_A * 3600UL)
+        slot = day * 2;
+    else
+        slot = (day - 1) * 2 + 1;
+
+    if (lastSlot == -1) {
+        // Time just became valid: remember the current slot, do not catch up on missed times.
+        lastSlot = slot;
+        if (timeMode != 1) {
+            timeMode = 1;
+            LOG_INFO("%s: time valid, schedule active (%02d:00 and %02d:00 Europe/Berlin)", CUSTOM_SENSOR_NAME,
+                     CUSTOM_SENSOR_STATUS_HOUR_A, CUSTOM_SENSOR_STATUS_HOUR_B);
+        }
+    } else if (slot > lastSlot) {
+        lastSlot = slot;
+        sendReport("Status:");
+        lastStatusMs = millis();
+    } else if (slot < lastSlot) {
+        lastSlot = slot; // clock jumped back: just follow, no message
+    }
+}
+
 int32_t CustomSensorModule::runOnce()
 {
     char state[sizeof(lastSentState)];
@@ -91,10 +147,12 @@ int32_t CustomSensorModule::runOnce()
         }
         formatState(state, sizeof(state));
         LOG_INFO("%s: init done, state=%s", CUSTOM_SENSOR_NAME, state);
-        // Nothing is sent at boot in step 2 (start message follows in step 3). The boot state is only the
-        // reference for comparing; the first change after boot is always sent immediately (no gap yet).
+        // The boot state is only the reference for comparing; the first change after boot is always
+        // sent immediately (no gap yet). The start message follows after CUSTOM_SENSOR_BOOT_REPORT_DELAY_MS.
         strncpy(lastSentState, state, sizeof(lastSentState) - 1);
         lastSentState[sizeof(lastSentState) - 1] = '\0';
+        bootReportPending = true;
+        bootReportDueMs = millis() + CUSTOM_SENSOR_BOOT_REPORT_DELAY_MS;
     }
 
     if (takeChangeEvent()) {
@@ -114,7 +172,14 @@ int32_t CustomSensorModule::runOnce()
         }
     }
 
+    handleSchedule();
+
     int32_t next = CUSTOM_SENSOR_IDLE_INTERVAL_MS;
+    if (bootReportPending) {
+        int32_t bootLeft = (int32_t)(bootReportDueMs - millis());
+        if (bootLeft < next)
+            next = bootLeft < 1 ? 1 : bootLeft;
+    }
     if (eventPending) {
         int32_t gapLeft = (int32_t)(CUSTOM_SENSOR_MIN_EVENT_GAP_MS - sinceLastEvent);
         if (gapLeft < next)

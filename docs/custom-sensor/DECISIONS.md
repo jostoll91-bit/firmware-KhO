@@ -56,7 +56,12 @@ Kurz und mit Begründung. Basis: Firmware v2.7.26, Board `seeed_xiao_nrf52840_ki
 - **Europe/Berlin wird im Code aus UTC berechnet** (EU-Sommerzeitregel). So hängt es nicht von `config.device.tzdef`
   ab und ändert keine globalen Einstellungen. Bestätigt durch den Board-Test: Im Gerät steht
   `CET-1CEST,M3.4.0/2,M10.4.0/3` (4. statt letzter Sonntag). Das wäre in manchen Jahren eine Woche falsch.
-- **Statusmeldung 06:00 und 18:00.** Verpasste Termine werden nicht nachgeholt.
+- **Berlin-Rechnung in eigener Header-Datei (`BerlinTime.h`)**, ohne `gmtime`/`mktime` und ohne Firmware-Abhängigkeit.
+  So lässt sie sich auf dem PC gegen die Zeitzonen-Datenbank prüfen (2024–2040 fehlerfrei).
+- **Statusmeldung 06:00 und 18:00.** Verpasste Termine werden nicht nachgeholt. Erkennung über "zuletzt vergangener
+  Termin" (Slot), geprüft bei jedem Lauf (≤60 s), kein eigener Wecker.
+- **Zeit gilt auch aus der App** (beim Verbinden gesetzt). Wir nehmen alles ab `RTCQualityFromNet`.
+- **Startmeldung 60 s nach dem Boot**, danach zählt der 6-h-Fallback ab dort.
 - **Fallback ohne gültige Zeit:** Statusmeldung alle 6 h ab Boot.
 
 ## Betrieb

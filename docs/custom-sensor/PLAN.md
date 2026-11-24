@@ -1,7 +1,8 @@
 # Plan Schritt 2 und 3
 
-**Status:** Schritt 2 umgesetzt (`5b29950b4`) und am Board bestätigt: Wechsel, Wedeln, Kabelbruch OK, Ankunft am Gateway
-bestätigt. Offen bis zum Test mit echtem Akku: der Akku/USB-Text (ohne Akku wird ein Akku gemeldet, siehe OPEN.md). **Nächster Schritt: Schritt 3, erst nach OK des Nutzers.**
+**Status:** Schritt 2 umgesetzt (`5b29950b4`) und am Board bestätigt. Offen bis zum Test mit echtem Akku: der
+Akku/USB-Text (siehe OPEN.md). **Schritt 3 umgesetzt und gebaut, Board-Test Schritt 3 steht aus** (siehe
+"Test Schritt 3", vorher fragen).
 
 Freigegebener Plan, so aufgeschrieben, dass man ihn ohne den Chatverlauf umsetzen kann. Stand nach Schritt 1
 (Commit `e1743618d`). Alle Fundstellen gelten für v2.7.26. Vor der Benutzung trotzdem im Quelltext gegenprüfen.
@@ -128,6 +129,16 @@ Freigegebener Plan, so aufgeschrieben, dass man ihn ohne den Chatverlauf umsetze
 ### Startmeldung
 - 60 s nach `setupSensor()` einmal `sendReport("Start:")`, damit das Mesh sich vorher eingeschwungen hat.
   `lastStatusMs = millis()` setzen, damit der 6-h-Fallback ab dort zählt.
+
+### Umsetzung Schritt 3 (so gebaut, Präzisierungen zum Plan)
+- Datumsrechnung in `BerlinTime.h` statt `gmtime_r` (header-only, auf dem PC testbar). Ergebnis siehe DEVLOG.
+- Reihenfolge in `runOnce()`: Setup → Ereignis → `handleSchedule()` (Start, dann Zeitplan/Fallback) → Rückgabe.
+  `sensorWakeMs()` bleibt die letzte Abfrage.
+- **Zeitquelle:** Gültig ist die Zeit auch, wenn die **App** verbunden war (`set_time_only` → `RTCQualityNTP`,
+  AdminModule.cpp:442), nicht nur durch GPS-Positionen vom Solarknoten. Für den Test heißt das: Wird die App
+  verbunden, ist die Zeit sofort gültig. Den Fallback-Test deshalb **ohne App-Verbindung** machen.
+- Status- und Startmeldung setzen ebenfalls `lastSentState`. Läuft gerade eine 10-s-Pause und die
+  Statusmeldung enthält schon den neuen Zustand, kommt danach keine doppelte Ereignis-Meldung.
 
 ### Test Schritt 3 (am Board, vorher fragen)
 - Log nach dem Boot: `no valid time, fallback every 6 h`, nach 60 s die Startmeldung im Mesh.

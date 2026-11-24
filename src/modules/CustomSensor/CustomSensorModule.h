@@ -24,13 +24,34 @@
 #define CUSTOM_SENSOR_MIN_EVENT_GAP_MS 10000
 #endif
 
+// Daily status messages at these two full hours, Europe/Berlin local time (A < B).
+#ifndef CUSTOM_SENSOR_STATUS_HOUR_A
+#define CUSTOM_SENSOR_STATUS_HOUR_A 6
+#endif
+#ifndef CUSTOM_SENSOR_STATUS_HOUR_B
+#define CUSTOM_SENSOR_STATUS_HOUR_B 18
+#endif
+static_assert(0 <= CUSTOM_SENSOR_STATUS_HOUR_A && CUSTOM_SENSOR_STATUS_HOUR_A < CUSTOM_SENSOR_STATUS_HOUR_B &&
+                  CUSTOM_SENSOR_STATUS_HOUR_B <= 23,
+              "CUSTOM_SENSOR_STATUS_HOUR_A/B must satisfy 0 <= A < B <= 23");
+
+// Status interval while no valid time is known (counted from boot / start message).
+#ifndef CUSTOM_SENSOR_FALLBACK_INTERVAL_MS
+#define CUSTOM_SENSOR_FALLBACK_INTERVAL_MS (6 * 3600 * 1000UL)
+#endif
+
+// The start message is sent this long after sensor setup, so the mesh has settled.
+#ifndef CUSTOM_SENSOR_BOOT_REPORT_DELAY_MS
+#define CUSTOM_SENSOR_BOOT_REPORT_DELAY_MS 60000
+#endif
+
 /**
  * Common base for our custom sensor modules (trap, later wind and fence).
  *
  * The subclass only does acquisition (pins, interrupts, debouncing, state text).
  * This base owns everything shared: thread lifecycle, sending (text message,
- * broadcast, primary channel), event rate limiting, the battery text and, in a
- * later step, the status schedule.
+ * broadcast, primary channel), event rate limiting, the battery text, the start
+ * message and the status schedule (06:00/18:00 Europe/Berlin, fallback every 6 h).
  *
  * Threading: OSThread is cooperative. runOnce() is called from the main loop and
  * returns the delay (ms) until it wants to run again. Interrupt handlers must only
@@ -63,6 +84,15 @@ class CustomSensorModule : protected concurrency::OSThread
     bool eventSentOnce = false;   // false until the first event message was attempted
     uint32_t lastEventSentMs = 0; // millis() of the last event message attempt
     char lastSentState[48] = {0}; // state text of the last message that went out
+
+    bool bootReportPending = false; // start message not sent yet
+    uint32_t bootReportDueMs = 0;   // millis() when the start message is due
+    uint32_t lastStatusMs = 0;      // millis() of the last start/status message (0 = boot)
+    int32_t lastSlot = -1;          // last passed schedule slot, -1 = no valid time (yet)
+    int8_t timeMode = -1;           // for logging only: -1 unknown, 0 fallback, 1 schedule
+
+    /// Start message and status schedule. Called on every runOnce().
+    void handleSchedule();
 
     /// Send the current state as event message, unless it equals the last sent state.
     /// Returns false if nothing was attempted because the state is unchanged.

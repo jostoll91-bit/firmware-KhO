@@ -1,5 +1,10 @@
 # Offene Punkte und Ideen
 
+## Nächste Tests
+- **Board-Test Schritt 3** (siehe PLAN.md): Startmeldung nach 60 s, Fallback-Log ohne Zeit (ohne App-Verbindung!),
+  `time valid, schedule active` nach GPS-Position vom Solarknoten oder App-Verbindung, Zeitplan-Test mit
+  temporären Stunden-Flags.
+
 ## Batterie / USB
 - **Ohne Akku wird ein Akku gemeldet.** Nur am USB zeigt die Firmware `battery hardware detected`, `usbPower=0`
   und Zufallswerte (49–94 %, 3,71–4,11 V). Darum steht in der Meldung `Akku ..%` statt `USB`. Vermutlich misst
