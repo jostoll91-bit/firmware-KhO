@@ -16,8 +16,8 @@
   `Falle jetzt OFFEN`. Beispiel mit Platzhaltern: `homeassistant-example.yaml`.
 - **Lebenszeichen-Alarm:** Beispiel erstellt (`homeassistant-heartbeat-example.yaml`, >13 h ohne `Falle `-Meldung,
   Zeitpunkt in `input_datetime`, Wiederholung frühestens nach 6 h, "wieder da"-Meldung). In der echten HA-Instanz
-  eingerichtet (Helfer in `configuration.yaml`, Automationen in `automations.yaml`), noch nicht getestet.
-  Test: `input_datetime.fallenmelder_last_seen` auf vor 14 h setzen, Alarm muss innerhalb von 15 min kommen.
+  eingerichtet (Helfer in `configuration.yaml`, Automationen in `automations.yaml`). **Getestet
+  2026-11-25:** Alarm kam, Wiederholung nach 6 h kam, Rückmeldung mit der 06:00-Statusmeldung.
 - **Mehrere Fallen (erst ab der zweiten Falle umbauen):** Unterscheidung über `from` (Knotennummer).
   - Fallen-Meldung: *eine* Automation mit Liste `traps: {<Knotennummer>: "<Name>"}` in `variables`,
     Bedingung `from in traps`, Name per `traps[from]` in den ntfy-Text.

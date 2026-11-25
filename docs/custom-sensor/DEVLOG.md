@@ -190,4 +190,11 @@ erst nach dem Commit feststeht.
   (Knotennummer dort auf 409011304 korrigiert). Konfigurationsprüfung grün, vier Automationen sichtbar.
   Alarm selbst noch nicht getestet.
 - OPEN.md: Vorgehen für mehrere Fallen notiert (eine Automation mit Liste, Lebenszeichen als Blueprint).
-- Commit: dieser Commit.
+- Commit: `e44674508`.
+
+## 2026-11-25 – Lebenszeichen-Alarm und 06:00-Status im Betrieb bestätigt
+- HA-Lebenszeichen-Alarm hat ausgelöst und nach 6 h wie vorgesehen erneut gemeldet ✅.
+- Heute 06:00 kam die Statusmeldung des Fallenmelders (Zeitplan im echten Betrieb über Nacht) ✅,
+  danach "wieder da" in HA.
+- Testauslösungen (ZU/OFFEN) kommen weiter per ntfy an ✅.
+- Keine Code-Änderung. Commit: dieser Commit.
