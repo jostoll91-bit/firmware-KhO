@@ -190,19 +190,19 @@ erst nach dem Commit feststeht.
   (Knotennummer dort auf 409011304 korrigiert). Konfigurationsprüfung grün, vier Automationen sichtbar.
   Alarm selbst noch nicht getestet.
 - OPEN.md: Vorgehen für mehrere Fallen notiert (eine Automation mit Liste, Lebenszeichen als Blueprint).
-- Commit: `e44674508`.
+- Commit: `b5458fcb4`.
 
 ## 2026-11-25 – Lebenszeichen-Alarm und 06:00-Status im Betrieb bestätigt
 - HA-Lebenszeichen-Alarm hat ausgelöst und nach 6 h wie vorgesehen erneut gemeldet ✅.
 - Heute 06:00 kam die Statusmeldung des Fallenmelders (Zeitplan im echten Betrieb über Nacht) ✅,
   danach "wieder da" in HA.
 - Testauslösungen (ZU/OFFEN) kommen weiter per ntfy an ✅.
-- Keine Code-Änderung. Commit: `343f0b3dd`.
+- Keine Code-Änderung. Commit: `322732134`.
 
 ## 2026-11-25 – Offene Punkte nachgetragen
 - `tzdef` laut Nutzer in der App korrigiert (Gegenprüfung im nächsten Boot-Log).
 - Test der Kanal-Sperre zurückgestellt (öffentlicher Standardkanal ist auf den eigenen Geräten nicht eingerichtet).
-- Commit: `af9808626`.
+- Commit: `5bfd67139`.
 
 ## 2026-11-25 – want_ack für alle Meldungen
 - Neues Flag `CUSTOM_SENSOR_WANT_ACK` (Standard 1) in `CustomSensorModule.h`, `sendText()` setzt
@@ -210,13 +210,18 @@ erst nach dem Commit feststeht.
 - Geprüft: `router` ist in v2.7.26 ein `ReliableRouter` (main.cpp:734), `NUM_RELIABLE_RETX = 3`.
 - Build: SUCCESS, Flash 725 896 B (unverändert), RAM unverändert, clang-format (Projekt-Stil) sauber.
 - Am Board noch nicht getestet.
-- Commit: `5d6668159`.
+- Commit: `a66368c6c`.
 
 ## 2026-11-25 – Board-Test want_ack (nur USB)
-- Flash OK (`2.7.26.5d66681`). Mitschnitt mit `serlog.py`, Uptime in Sekunden:
+- Flash OK (`2.7.26.5d66681`, Build vor dem Umschreiben = Inhalt von `a66368c6c`). Mitschnitt mit `serlog.py`, Uptime in Sekunden:
   - 64 `Falle Start: OFFEN` → 69 `Generate implicit ack`, `Received a ACK ..., stopping retransmissions` ✅
   - 98 `Falle jetzt ZU (gefangen oder Kabelbruch)` → 103 implicit ACK ✅
   - 111 `Falle jetzt OFFEN` → nach 7,35 s kein Weitersenden gehört → 118 `Sending retransmission ... tries left=2`
     → 120 implicit ACK (Nachbar `relay=0x40`) ✅. Die Wiederholung hat also einmal echt gegriffen.
 - Ergebnis: want_ack funktioniert wie geplant.
+- Commit: `666182cf4`.
+
+## 2026-11-25 – Commit-Adresse auf GitHub-Noreply umgestellt
+- Push wurde abgelehnt (GitHub-E-Mail-Schutz). Im Repo `user.email` auf die GitHub-Noreply-Adresse gesetzt und
+  die 5 noch nicht gepushten Commits umgeschrieben (Inhalt gleich, neue Hashes). Hashes oben korrigiert.
 - Commit: dieser Commit.
