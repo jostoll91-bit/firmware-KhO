@@ -253,4 +253,25 @@ erst nach dem Commit feststeht.
 
   Die +448 B sind der Taktmodus-Code, den die Falle mitbringt (Auswahl zur Laufzeit über `reportIntervalMs()`).
   Freier Flash: noch ca. 89,6 kB. Nicht geflasht (der Ablauf der Falle ist unverändert).
+- Commit: `dc2d8a137`.
+
+## 2026-11-25 – Windsensor Schritt 3: WindSensorModule (nur Log) + Env
+- Neu `src/modules/CustomSensor/WindSensorModule.{h,cpp}`:
+  - GPS-Prüfung, EN an D0 (LOW = aus), Pin-Map-Log.
+  - Zustandsmaschine Warmup → Request → Wait im 2-s-Raster, Modbus-Anfrage `04 03 00 00 00 01 84 5f`
+    (CRC im Code, Python-Gegenprobe: Datenblatt-Beispiel mit 2 Registern ergibt wie gedruckt `c4 5e`).
+  - Prüfung von Adresse, Funktion, Bytezahl, CRC und Bereich, Vektor-Mittel, `WIND d=… bat=…`.
+  - Nach dem Fenster `Serial1.end()` und EN LOW. `#error`, falls `BUTTON_PIN == WIND_EN_PIN`.
+- Registrierung in `Modules.cpp` hinter `CUSTOM_SENSOR_WIND`. Neues Env `seeed_xiao_nrf52840_kit_wind`
+  (`extends`, nur `-UCUSTOM_SENSOR_TRAP -DCUSTOM_SENSOR_WIND=1 -DCUSTOM_SENSOR_LOG_ONLY=1`).
+- Geprüft: `-U` wirkt, in der Wind-ELF gibt es 0 TrapSensor-Symbole (`nm`).
+- Builds: beide SUCCESS, keine Warnungen in den eigenen Dateien, clang-format sauber.
+
+  | | Falle vorher | Falle nachher | Wind |
+  |---|---|---|---|
+  | Flash (text+data) | 726 344 B | 726 344 B | 727 336 B (+992 B ggü. Falle) |
+  | RAM (data+bss) | 235 520 B | 235 520 B | 235 520 B |
+
+  `sinf`/`cosf`/`atan2f` waren offenbar schon gelinkt. Freier Flash (Wind): noch ca. 88,6 kB.
+- Nicht geflasht. Als Nächstes kommt der Hardwaretest (Schritt 4) nach „Board ist angeschlossen“.
 - Commit: dieser Commit (Hash im nächsten Eintrag).

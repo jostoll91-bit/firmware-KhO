@@ -1,6 +1,6 @@
 # Plan Windsensor (Schritte 1–6)
 
-**Status:** Freigegeben am 2026-11-25. Schritt 1 (Doku) und Schritt 2 (Basis) erledigt, als Nächstes kommt Schritt 3.
+**Status:** Freigegeben am 2026-11-25. Schritte 1–3 erledigt (Doku, Basis, Windmodul im Log-Modus), als Nächstes kommt Schritt 4 (Hardwaretest).
 Der Fallenmelder ist fertig und am Board getestet. Sein Plan (Schritte 1–3) steht in der Git-Historie
 (PLAN.md bis Commit `dd608a154`). Was gebaut wurde, steht in DECISIONS.md und DEVLOG.md.
 
@@ -53,7 +53,7 @@ gegenprüfen.
 - Danach den **Fallenmelder bauen** und Flash/RAM vergleichen (vorher 725 896 B / 102 204 B).
   Erwartet: wenige Bytes mehr, keine Änderung im Ablauf. Ergebnis: +448 B, RAM gleich (DEVLOG).
 
-## Schritt 3: `WindSensorModule` (nur Log) + Environment
+## Schritt 3: `WindSensorModule` (nur Log) + Environment ✅
 - **Neues Environment** in `variants/nrf52840/seeed_xiao_nrf52840_kit/platformio.ini`:
   ```
   [env:seeed_xiao_nrf52840_kit_wind]
@@ -82,7 +82,7 @@ gegenprüfen.
   1. `startMeasurement()`: EN HIGH, `Serial1.begin(9600)`, Zähler und Summen auf 0, `windowStartMs` merken,
      Zustand WARMUP. Rückgabe von `runMeasurement()`: `WIND_WARMUP_MS`.
   2. REQUEST: Empfangspuffer leeren (`while (Serial1.available()) Serial1.read();`), dann 8 Bytes
-     `04 03 00 00 00 01 CRClo CRChi` senden (CRC im Code berechnet). Zustand WAIT, Rückgabe 20.
+     `04 03 00 00 00 01 CRClo CRChi` senden (CRC im Code berechnet, ergibt `84 5f`). Zustand WAIT, Rückgabe 20.
   3. WAIT: Verfügbare Bytes in einen Puffer (max. 16) lesen. Bei 7 Bytes, oder nach `WIND_RESPONSE_TIMEOUT_MS`,
      die Antwort auswerten. Sonst Rückgabe 20.
   4. Auswerten: Adresse, Funktion 0x03, Bytezahl 2, CRC (0xA001, Low-Byte zuerst), dann

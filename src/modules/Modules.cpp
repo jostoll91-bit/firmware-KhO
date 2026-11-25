@@ -74,6 +74,9 @@
 #if CUSTOM_SENSOR_TRAP
 #include "modules/CustomSensor/TrapSensorModule.h"
 #endif
+#if CUSTOM_SENSOR_WIND
+#include "modules/CustomSensor/WindSensorModule.h"
+#endif
 
 #ifdef ARCH_ESP32
 #if defined(USE_SX1280) && !MESHTASTIC_EXCLUDE_AUDIO
@@ -171,6 +174,9 @@ void setupModules()
 #endif
 #if CUSTOM_SENSOR_TRAP
     trapSensorModule = new TrapSensorModule();
+#endif
+#if CUSTOM_SENSOR_WIND
+    windSensorModule = new WindSensorModule();
 #endif
     // Note: if the rest of meshtastic doesn't need to explicitly use your module, you do not need to assign the instance
     // to a global variable.

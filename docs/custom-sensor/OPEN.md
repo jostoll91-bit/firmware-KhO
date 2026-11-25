@@ -60,6 +60,7 @@
   **Laut Nutzer in der App korrigiert (2026-11-25).** Beim nächsten Boot-Log gegenprüfen.
 
 ## Windsensor
+- **`-DCUSTOM_SENSOR_LOG_ONLY=1` im Wind-Env** in Schritt 5 entfernen, sonst sendet der Windsensor nie.
 - **Skalierung, Drehsinn und Nullpunkt** im Hardwaretest (Schritt 4) klären: Fahne auf N/O/S/W, Rohwerte loggen.
   Das Datenblatt widerspricht sich (0,1° laut Tabelle, 1° laut Beispiel).
 - **R2 auf dem Wio-SX1262-Board auslöten? (Entscheidung Nutzer, Schritt 6).** An D0 (EN des Step-ups) hängen
