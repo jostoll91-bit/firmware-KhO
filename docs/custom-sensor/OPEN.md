@@ -45,9 +45,9 @@
 - **CLIENT_MUTE** als Rolle prüfen: Fremde Pakete werden nicht weitergeleitet, das spart Sendezeit.
 
 ## Zustellsicherheit
-- **`want_ack=true` umgesetzt** (DECISIONS.md, Senden), am Board noch nicht getestet. Test: Meldung auslösen,
-  im Log `Rx someone rebroadcasting for us` und `Generate implicit ack` suchen; ohne erreichbaren Nachbarn
-  `Sending retransmission ... tries left=` und am Ende `Reliable send failed` (nur mit DEBUG-Log sichtbar).
+- **`want_ack=true` umgesetzt und am Board bestätigt** (DEVLOG 2026-11-25, eine echte Wiederholung beobachtet).
+  Log-Zeilen zum Nachsehen: `Generate implicit ack`, `Sending retransmission ... tries left=`, am Ende ohne Erfolg
+  `Reliable send failed` (alles DEBUG).
 - Echte Ende-zu-Ende-Bestätigung nur per Direktnachricht an den Zuhause-Knoten. Offen: Kommt eine
   Direktnachricht über MQTT bei HA an? Erst prüfen, falls nötig.
 

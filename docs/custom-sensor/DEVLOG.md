@@ -210,4 +210,13 @@ erst nach dem Commit feststeht.
 - Geprüft: `router` ist in v2.7.26 ein `ReliableRouter` (main.cpp:734), `NUM_RELIABLE_RETX = 3`.
 - Build: SUCCESS, Flash 725 896 B (unverändert), RAM unverändert, clang-format (Projekt-Stil) sauber.
 - Am Board noch nicht getestet.
+- Commit: `5d6668159`.
+
+## 2026-11-25 – Board-Test want_ack (nur USB)
+- Flash OK (`2.7.26.5d66681`). Mitschnitt mit `serlog.py`, Uptime in Sekunden:
+  - 64 `Falle Start: OFFEN` → 69 `Generate implicit ack`, `Received a ACK ..., stopping retransmissions` ✅
+  - 98 `Falle jetzt ZU (gefangen oder Kabelbruch)` → 103 implicit ACK ✅
+  - 111 `Falle jetzt OFFEN` → nach 7,35 s kein Weitersenden gehört → 118 `Sending retransmission ... tries left=2`
+    → 120 implicit ACK (Nachbar `relay=0x40`) ✅. Die Wiederholung hat also einmal echt gegriffen.
+- Ergebnis: want_ack funktioniert wie geplant.
 - Commit: dieser Commit.

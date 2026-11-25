@@ -48,7 +48,7 @@ Kurz und mit Begründung. Basis: Firmware v2.7.26, Board `seeed_xiao_nrf52840_ki
   Broadcasts wiederholt der Router bis zu 3-mal, bis ein Nachbar das Paket per LoRa weitersendet (implicit ACK,
   ReliableRouter.cpp:42–62). Bestätigt ist nur der erste Hop, nicht die Ankunft beim Zuhause-Knoten. Gilt auch für
   Start- und Statusmeldungen, weil die ebenfalls `ZU` (Alarm) enthalten können. Kostet im Normalfall keine
-  Sendezeit, nur wenn kein Nachbar weitersendet. Mit `-DCUSTOM_SENSOR_WANT_ACK=0` wieder wie v1.
+  Sendezeit, nur wenn kein Nachbar weitersendet. Mit `-DCUSTOM_SENSOR_WANT_ACK=0` wieder wie v1. Am Board bestätigt (DEVLOG 2026-11-25).
 - **Pause startet nur bei einem Sendeversuch.** Bestätigt am Board (Test 2a): Endet die Pause mit dem schon
   gesendeten Zustand, geht der nächste echte Wechsel sofort raus statt bis zu 10 s später.
 - **Kanal-Sperre zählt als Sendeversuch** für den Mindestabstand, damit die Warnung das Log nicht flutet.
