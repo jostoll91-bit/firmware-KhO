@@ -2,7 +2,11 @@
 
 #include "configuration.h"
 
-#if CUSTOM_SENSOR_TRAP
+#if CUSTOM_SENSOR_TRAP || CUSTOM_SENSOR_WIND
+
+#if CUSTOM_SENSOR_TRAP && CUSTOM_SENSOR_WIND
+#error "Only one custom sensor module per build: CUSTOM_SENSOR_TRAP or CUSTOM_SENSOR_WIND"
+#endif
 
 #include "concurrency/OSThread.h"
 #include <stddef.h>
@@ -10,7 +14,16 @@
 
 // Name used as prefix in log lines and in mesh text messages.
 #ifndef CUSTOM_SENSOR_NAME
+#if CUSTOM_SENSOR_WIND
+#define CUSTOM_SENSOR_NAME "Wind"
+#else
 #define CUSTOM_SENSOR_NAME "Falle"
+#endif
+#endif
+
+// 1 = only log what would be sent, never transmit (for first hardware tests). 0 = normal operation.
+#ifndef CUSTOM_SENSOR_LOG_ONLY
+#define CUSTOM_SENSOR_LOG_ONLY 0
 #endif
 
 // Longest time the thread sleeps without being woken by an interrupt.
@@ -60,6 +73,11 @@ static_assert(0 <= CUSTOM_SENSOR_STATUS_HOUR_A && CUSTOM_SENSOR_STATUS_HOUR_A < 
  * broadcast, primary channel), event rate limiting, the battery text, the start
  * message and the status schedule (06:00/18:00 Europe/Berlin, fallback every 6 h).
  *
+ * Two report modes, chosen by the subclass via reportIntervalMs():
+ *  - 0 (default, trap): change events + start message + status schedule.
+ *  - > 0 (periodic, wind): every interval run a measurement (startMeasurement/runMeasurement)
+ *    and send the text from formatReport(). No start message, no 06/18 schedule.
+ *
  * Threading: OSThread is cooperative. runOnce() is called from the main loop and
  * returns the delay (ms) until it wants to run again. Interrupt handlers must only
  * set volatile flags and wake the main loop; all real work happens in runOnce().
@@ -82,6 +100,30 @@ class CustomSensorModule : protected concurrency::OSThread
     /// Milliseconds until the sensor needs runOnce() again (e.g. debounce pending), INT32_MAX if nothing pending.
     virtual int32_t sensorWakeMs() { return INT32_MAX; }
 
+    /// Periodic mode: report interval in ms. 0 (default) = trap mode (events + status schedule).
+    virtual uint32_t reportIntervalMs() { return 0; }
+
+    /// Periodic mode: begin a measurement window (e.g. switch the sensor on).
+    virtual void startMeasurement() {}
+
+    /// Periodic mode: advance the measurement. Return ms until the next call, or 0 when finished.
+    /// Must never block; long waits are expressed through the return value.
+    virtual int32_t runMeasurement() { return 0; }
+
+    /// Periodic mode: write the complete message text. battery is "87%" or "USB".
+    virtual void formatReport(char *buf, size_t len, const char *battery)
+    {
+        (void)battery;
+        if (len)
+            buf[0] = '\0';
+    }
+
+    /// Battery charge as "87%", or "USB" if no battery is detected.
+    void batteryPercentText(char *buf, size_t len);
+
+    /// Send plain text as TEXT_MESSAGE_APP broadcast on the primary channel. Returns true if sent.
+    bool sendText(const char *text);
+
     int32_t runOnce() override;
 
   private:
@@ -98,6 +140,13 @@ class CustomSensorModule : protected concurrency::OSThread
     int32_t lastSlot = -1;          // last passed schedule slot, -1 = no valid time (yet)
     int8_t timeMode = -1;           // for logging only: -1 unknown, 0 fallback, 1 schedule
 
+    bool measuring = false;    // periodic mode: a measurement window is running
+    uint32_t nextCycleMs = 0;  // periodic mode: millis() when the next window starts
+    uint32_t measureDueMs = 0; // periodic mode: millis() of the next runMeasurement() call
+
+    /// Periodic mode: start windows on time, drive the measurement, send the result.
+    void handlePeriodic();
+
     /// Start message and status schedule. Called on every runOnce().
     void handleSchedule();
 
@@ -107,9 +156,6 @@ class CustomSensorModule : protected concurrency::OSThread
 
     /// Build "<NAME> <prefix> <state> | <battery>" and send it. Returns true if sent.
     bool sendReport(const char *prefix);
-
-    /// Send plain text as TEXT_MESSAGE_APP broadcast on the primary channel. Returns true if sent.
-    bool sendText(const char *text);
 };
 
-#endif // CUSTOM_SENSOR_TRAP
+#endif // CUSTOM_SENSOR_TRAP || CUSTOM_SENSOR_WIND

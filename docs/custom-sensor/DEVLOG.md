@@ -235,4 +235,22 @@ erst nach dem Commit feststeht.
   Schaltplan Wio-SX1262 for XIAO V1.0: D0 hat R2 = 10 kΩ Pull-up und Taster K1, D6/D7 sind dort frei (OPEN.md).
 - CLAUDE.md: Regel präzisiert (abgeleitete Envs per `extends` nur für Modul-Flags).
 - Ausgangsgröße (Fallenmelder, Stand `dd608a154`): Flash 725 896 B, RAM (statisch) 102 204 B. Keine Code-Änderung.
+- Commit: `3a483f018`.
+
+## 2026-11-25 – Windsensor Schritt 2: Taktmodus in der Basis
+- `CustomSensorModule`: neue Hooks `reportIntervalMs()` (Standard 0 = Fallenmodus wie bisher), `startMeasurement()`,
+  `runMeasurement()`, `formatReport()`. Neu `handlePeriodic()` (erstes Fenster 60 s nach Setup, dann im festen Takt
+  ab Fensterbeginn), `batteryPercentText()` ("87%"/"USB"), Flag `CUSTOM_SENSOR_LOG_ONLY` (Standard 0).
+  `sendText()` ist jetzt protected. Schutz `#if CUSTOM_SENSOR_TRAP || CUSTOM_SENSOR_WIND`, `#error` bei beiden,
+  Name "Wind" bei `CUSTOM_SENSOR_WIND`.
+- `TrapSensorModule` unverändert. Im Fallenmodus laufen Start, 06/18, Fallback und Ereignisse wie bisher.
+- Build Falle: SUCCESS, keine Warnungen in den eigenen Dateien, clang-format (Projekt-Stil) sauber.
+
+  | | vorher | nachher | Differenz |
+  |---|---|---|---|
+  | Flash (text+data) | 725 896 B | 726 344 B | **+448 B** |
+  | RAM (data+bss) | 235 520 B | 235 520 B | 0 B |
+
+  Die +448 B sind der Taktmodus-Code, den die Falle mitbringt (Auswahl zur Laufzeit über `reportIntervalMs()`).
+  Freier Flash: noch ca. 89,6 kB. Nicht geflasht (der Ablauf der Falle ist unverändert).
 - Commit: dieser Commit (Hash im nächsten Eintrag).

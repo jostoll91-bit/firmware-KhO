@@ -1,6 +1,6 @@
 # Plan Windsensor (Schritte 1–6)
 
-**Status:** Freigegeben am 2026-11-25. Schritt 1 (nur Doku) erledigt, als Nächstes kommt Schritt 2.
+**Status:** Freigegeben am 2026-11-25. Schritt 1 (Doku) und Schritt 2 (Basis) erledigt, als Nächstes kommt Schritt 3.
 Der Fallenmelder ist fertig und am Board getestet. Sein Plan (Schritte 1–3) steht in der Git-Historie
 (PLAN.md bis Commit `dd608a154`). Was gebaut wurde, steht in DECISIONS.md und DEVLOG.md.
 
@@ -24,7 +24,7 @@ gegenprüfen.
 ## Schritt 1: Nur Doku ✅
 `WINDSENSOR.md`, dieser Plan, CLAUDE.md-Regel zu abgeleiteten Envs, DEVLOG/DECISIONS/OPEN.
 
-## Schritt 2: Basis um Taktmodus erweitern (Fallenmelder bleibt unverändert)
+## Schritt 2: Basis um Taktmodus erweitern (Fallenmelder bleibt unverändert) ✅
 - **Schutz:** In `CustomSensorModule.h/.cpp` wird `#if CUSTOM_SENSOR_TRAP` zu
   `#if CUSTOM_SENSOR_TRAP || CUSTOM_SENSOR_WIND`. Dazu kommt
   `static_assert(!(CUSTOM_SENSOR_TRAP && CUSTOM_SENSOR_WIND), ...)`, damit nicht beide gleichzeitig gebaut werden.
@@ -51,7 +51,7 @@ gegenprüfen.
   `"%s: LOG ONLY, not sent '%s'"` und gibt true zurück. Bei 0 bleibt der Code genau wie bisher (`#if`).
 - `sendText()` wird `protected`. Kanal-Sperre und `want_ack` gelten damit auch für den Windsensor.
 - Danach den **Fallenmelder bauen** und Flash/RAM vergleichen (vorher 725 896 B / 102 204 B).
-  Erwartet: wenige Bytes mehr, keine Änderung im Ablauf.
+  Erwartet: wenige Bytes mehr, keine Änderung im Ablauf. Ergebnis: +448 B, RAM gleich (DEVLOG).
 
 ## Schritt 3: `WindSensorModule` (nur Log) + Environment
 - **Neues Environment** in `variants/nrf52840/seeed_xiao_nrf52840_kit/platformio.ini`:

@@ -1,6 +1,6 @@
 #include "CustomSensorModule.h"
 
-#if CUSTOM_SENSOR_TRAP
+#if CUSTOM_SENSOR_TRAP || CUSTOM_SENSOR_WIND
 
 #include "BerlinTime.h"
 #include "MeshService.h"
@@ -14,6 +14,10 @@ CustomSensorModule::CustomSensorModule(const char *threadName) : concurrency::OS
 
 bool CustomSensorModule::sendText(const char *text)
 {
+#if CUSTOM_SENSOR_LOG_ONLY
+    LOG_INFO("%s: LOG ONLY, not sent '%s'", CUSTOM_SENSOR_NAME, text);
+    return true;
+#endif
     // Never broadcast sensor data on the public default channel (default PSK and preset name, e.g. "LongFast").
     if (channels.isDefaultChannel(0)) {
         LOG_WARN("%s: NOT sent - primary channel is the public default channel. Configure a private primary channel (own "
@@ -37,6 +41,17 @@ bool CustomSensorModule::sendText(const char *text)
     service->sendToMesh(p, RX_SRC_LOCAL, true); // ccToPhone: also show it in the app
     LOG_INFO("%s: sent id=0x%08lx '%s'", CUSTOM_SENSOR_NAME, (unsigned long)id, text);
     return true;
+}
+
+void CustomSensorModule::batteryPercentText(char *buf, size_t len)
+{
+#if defined(HAS_PMU) || defined(BATTERY_PIN)
+    if (powerStatus && powerStatus->getHasBattery()) {
+        snprintf(buf, len, "%u%%", (unsigned)powerStatus->getBatteryChargePercent());
+        return;
+    }
+#endif
+    snprintf(buf, len, "USB");
 }
 
 bool CustomSensorModule::sendReport(const char *prefix)
@@ -135,6 +150,35 @@ void CustomSensorModule::handleSchedule()
     }
 }
 
+void CustomSensorModule::handlePeriodic()
+{
+    // Start a new window on time. The interval counts from window start, so the period does not drift.
+    if (!measuring && (int32_t)(millis() - nextCycleMs) >= 0) {
+        nextCycleMs += reportIntervalMs();
+        if ((int32_t)(millis() - nextCycleMs) >= 0)
+            nextCycleMs = millis() + reportIntervalMs(); // far behind (should not happen): restart the raster
+        LOG_INFO("%s: measurement window started", CUSTOM_SENSOR_NAME);
+        startMeasurement();
+        measuring = true;
+        measureDueMs = millis();
+    }
+
+    if (measuring && (int32_t)(millis() - measureDueMs) >= 0) {
+        int32_t wait = runMeasurement();
+        if (wait > 0) {
+            measureDueMs = millis() + wait;
+            return;
+        }
+        measuring = false;
+        char battery[16];
+        batteryPercentText(battery, sizeof(battery));
+        char msg[120];
+        formatReport(msg, sizeof(msg), battery);
+        if (msg[0])
+            sendText(msg);
+    }
+}
+
 int32_t CustomSensorModule::runOnce()
 {
     char state[sizeof(lastSentState)];
@@ -151,8 +195,13 @@ int32_t CustomSensorModule::runOnce()
         // sent immediately (no gap yet). The start message follows after CUSTOM_SENSOR_BOOT_REPORT_DELAY_MS.
         strncpy(lastSentState, state, sizeof(lastSentState) - 1);
         lastSentState[sizeof(lastSentState) - 1] = '\0';
-        bootReportPending = true;
-        bootReportDueMs = millis() + CUSTOM_SENSOR_BOOT_REPORT_DELAY_MS;
+        if (reportIntervalMs() > 0) {
+            // Periodic mode: no start message, the first window starts after the same delay.
+            nextCycleMs = millis() + CUSTOM_SENSOR_BOOT_REPORT_DELAY_MS;
+        } else {
+            bootReportPending = true;
+            bootReportDueMs = millis() + CUSTOM_SENSOR_BOOT_REPORT_DELAY_MS;
+        }
     }
 
     if (takeChangeEvent()) {
@@ -172,9 +221,18 @@ int32_t CustomSensorModule::runOnce()
         }
     }
 
-    handleSchedule();
+    bool periodic = reportIntervalMs() > 0;
+    if (periodic)
+        handlePeriodic();
+    else
+        handleSchedule();
 
     int32_t next = CUSTOM_SENSOR_IDLE_INTERVAL_MS;
+    if (periodic) {
+        int32_t left = (int32_t)((measuring ? measureDueMs : nextCycleMs) - millis());
+        if (left < next)
+            next = left < 1 ? 1 : left;
+    }
     if (bootReportPending) {
         int32_t bootLeft = (int32_t)(bootReportDueMs - millis());
         if (bootLeft < next)
@@ -192,4 +250,4 @@ int32_t CustomSensorModule::runOnce()
     return sensorNext < next ? sensorNext : next;
 }
 
-#endif // CUSTOM_SENSOR_TRAP
+#endif // CUSTOM_SENSOR_TRAP || CUSTOM_SENSOR_WIND

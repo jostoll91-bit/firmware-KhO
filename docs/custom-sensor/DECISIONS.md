@@ -80,6 +80,8 @@ Kurz und mit Begründung. Basis: Firmware v2.7.26, Board `seeed_xiao_nrf52840_ki
   dann läuft der Fallenmodus wie bisher (Start, 06/18, Fallback). Ein Wert > 0 schaltet auf "alle N ms messen und
   melden". Die Messung selbst steckt im Sensormodul (`startMeasurement`/`runMeasurement`), ebenso der Text
   (`formatReport`). Zeitplan und Senden bleiben in der Basis. Der Fallenmelder überschreibt die neuen Hooks nicht.
+  Die Auswahl passiert zur Laufzeit. Die Falle trägt dafür +448 B Flash mit, ohne `#if`-Weichen im Ablauf
+  (einfacher zu lesen, Flash reicht).
 - **Kein Startbericht, keine 06/18-Meldung beim Windsensor.** Das erste Messfenster beginnt 60 s nach dem Boot,
   danach alle 30 min, gezählt ab Fensterbeginn (der Takt verschiebt sich nicht).
 - **Modbus selbst implementiert** (eine Anfrage, eine Antwort, CRC16), keine Bibliothek. Das spart Flash, und es wird
