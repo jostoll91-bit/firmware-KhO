@@ -1,5 +1,29 @@
 # Offene Punkte und Ideen
 
+## Wiederaufnahme (Stand 2026-11-25, pausiert für den Aufbau der Testschaltung)
+**Nächster Schritt: Windsensor Schritt 4, Hardwaretest im Nur-Log-Modus mit 5-min-Takt** (Details in PLAN.md).
+Die Firmware ist fertig (Commit `cb87c8daf`). Das Wind-Env sendet nichts, es loggt nur (`CUSTOM_SENSOR_LOG_ONLY=1`).
+
+Vorbereitung (Nutzer):
+1. Gerät: `position.gps_mode = NOT_PRESENT` (Pflicht, sonst schaltet sich das Modul mit LOG_ERROR ab),
+   Primary-Channel privat.
+2. RS485-Modul mit 3,3 V versorgen und die Spannung an Modul-TX gegen GND messen (≤ 3,3 V). Erst dann anschließen.
+3. Verdrahtung: Modul-VCC → 3V3, GND → GND, Modul-TX → D7, Modul-RX → D6, A/B → Fahne.
+4. Fahne vorerst direkt an 5 V (5V/USB-Pin des XIAO), noch ohne Step-up. EN an D0 bleibt im Test unbenutzt.
+5. Pfeil am Sockel nach Nord, damit N/O/S/W gedreht werden können.
+6. Dann melden: „Board ist angeschlossen“.
+
+Bauen und flashen (Claude, erst nach der Meldung):
+```
+PLATFORMIO_BUILD_FLAGS="-DWIND_REPORT_INTERVAL_MS=300000" pio run -e seeed_xiao_nrf52840_kit_wind -t upload --upload-port /dev/ttyACM0
+```
+Log im Hintergrund mitschneiden:
+`~/.platformio/penv/bin/python -I docs/custom-sensor/tools/serlog.py /dev/ttyACM0 <sek> <datei>`.
+Erstes Fenster 60 s nach dem Boot, dann alle 5 min. Erwartete Log-Zeilen: `Wind: request 04 03 00 00 00 01 84 5f`,
+`Wind: raw=…` bzw. `Wind: timeout, got N bytes: …`, am Ende `Wind: window done, x/60 valid, d=…`.
+Ablauf: keine Antwort → TX/RX tauschen, dann A/B. Danach Fahne nacheinander auf N, O, S, W, Rohwerte notieren
+(Skalierung 900 oder 90 bei Ost? Drehsinn? Nullpunkt?).
+
 ## Batterie / USB
 - **Test mit echtem Akku zurückgestellt (kein Akku verfügbar).** Alles läuft im USB-Betrieb. Der Akkuwert im Text
   ist dabei Rauschen und nicht aussagekräftig. In HA ist der Fallen-Knoten deshalb von der Akku-Regel

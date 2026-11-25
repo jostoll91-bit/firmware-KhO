@@ -274,4 +274,12 @@ erst nach dem Commit feststeht.
 
   `sinf`/`cosf`/`atan2f` waren offenbar schon gelinkt. Freier Flash (Wind): noch ca. 88,6 kB.
 - Nicht geflasht. Als Nächstes kommt der Hardwaretest (Schritt 4) nach „Board ist angeschlossen“.
+- Commit: `cb87c8daf`.
+
+## 2026-11-25 – Pause vor Schritt 4, Doku nachgezogen
+- PLAN.md: `static_assert` → `#error` korrigiert (so ist es gebaut).
+- DECISIONS.md: Namensschema der Environments (ein Env pro Sensor per `extends`, Suffix `_wind`, später `_fence`;
+  die Falle bleibt vorerst im Basis-Env, beim Weidezaun Umzug nach `_trap` prüfen).
+- OPEN.md: Abschnitt „Wiederaufnahme“ mit dem nächsten Schritt (Hardwaretest), der Vorbereitung und dem Befehl.
+- Keine Code-Änderung. Pausiert, weil die Testschaltung erst aufgebaut wird.
 - Commit: dieser Commit (Hash im nächsten Eintrag).

@@ -27,7 +27,8 @@ gegenprüfen.
 ## Schritt 2: Basis um Taktmodus erweitern (Fallenmelder bleibt unverändert) ✅
 - **Schutz:** In `CustomSensorModule.h/.cpp` wird `#if CUSTOM_SENSOR_TRAP` zu
   `#if CUSTOM_SENSOR_TRAP || CUSTOM_SENSOR_WIND`. Dazu kommt
-  `static_assert(!(CUSTOM_SENSOR_TRAP && CUSTOM_SENSOR_WIND), ...)`, damit nicht beide gleichzeitig gebaut werden.
+  `#if CUSTOM_SENSOR_TRAP && CUSTOM_SENSOR_WIND` → `#error`, damit nicht beide gleichzeitig gebaut werden
+  (ein `static_assert` geht nicht, weil ein nicht definiertes Flag dort kein gültiger Ausdruck ist).
   `CUSTOM_SENSOR_NAME` ist standardmäßig `"Wind"`, wenn `CUSTOM_SENSOR_WIND` gesetzt ist, sonst `"Falle"`.
 - **Neue virtuelle Hooks.** Die Standardwerte lassen den Fallenmelder genau so laufen wie bisher:
   - `virtual uint32_t reportIntervalMs() { return 0; }`: 0 heißt Fallenmodus (Start, 06/18, 6-h-Fallback, wie

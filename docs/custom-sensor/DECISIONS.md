@@ -92,6 +92,10 @@ Kurz und mit Begründung. Basis: Firmware v2.7.26, Board `seeed_xiao_nrf52840_ki
   `-UCUSTOM_SENSOR_TRAP -DCUSTOM_SENSOR_WIND=1`). Gleiche Hardware-Variante, keine Pin-Änderungen. Das Fallen-Env
   bleibt unverändert. Beide Module zusammen verhindert ein `#error`. Geprüft: `-U` wirkt (keine TrapSensor-Symbole
   in der Wind-ELF).
+- **Namensschema der Environments:** ein Environment pro Sensor, per `extends` von `seeed_xiao_nrf52840_kit`,
+  Suffix = Sensor: `_wind`, später `_fence`. Nur Modul-Flags, keine Pin-Änderungen. Der Fallenmelder bleibt vorerst
+  im Basis-Environment `seeed_xiao_nrf52840_kit`. Beim Weidezaun prüfen, ob die Falle ebenfalls nach `_trap`
+  umzieht (dann wäre das Basis-Env ohne Sensormodul).
 - **EN des Step-ups an D0.** Am Header ist nur D0 frei (D1–D5, D8–D10 LoRa/SPI, D6/D7 UART). Prüfung, ob die
   Firmware D0 als Taster benutzt: **nein.** In der Standard-Kit-Variante ist `BUTTON_PIN` nicht definiert
   (variant.h:112 auskommentiert, nur `_i2c`/`_btb` setzen ihn), also gibt es keinen `UserButtonThread`
