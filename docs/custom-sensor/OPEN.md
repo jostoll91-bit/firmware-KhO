@@ -59,7 +59,19 @@
   prüfen?
   **Laut Nutzer in der App korrigiert (2026-11-25).** Beim nächsten Boot-Log gegenprüfen.
 
+## Windsensor
+- **Skalierung, Drehsinn und Nullpunkt** im Hardwaretest (Schritt 4) klären: Fahne auf N/O/S/W, Rohwerte loggen.
+  Das Datenblatt widerspricht sich (0,1° laut Tabelle, 1° laut Beispiel).
+- **R2 auf dem Wio-SX1262-Board auslöten? (Entscheidung Nutzer, Schritt 6).** An D0 (EN des Step-ups) hängen
+  R2 = 10 kΩ Pull-up nach 3V3 und Taster K1 nach GND. Folgen, wenn R2 bleibt:
+  - Solange der Sensor aus ist (D0 LOW), fließen dauernd **~330 µA** durch R2 (~8 mAh/Tag).
+  - Beim Boot/Reset ist D0 noch Eingang, R2 zieht EN hoch und der Step-up läuft kurz an.
+  - Taster K1 drücken, während D0 HIGH ist (Messfenster), schließt den Ausgang gegen GND kurz.
+  Vorschlag: R2 (0402) auslöten, 100 kΩ Pull-down an EN, ggf. 1 kΩ in Reihe zwischen D0 und EN.
+- **Ruhestrom des RS485-Moduls** messen (es hängt dauernd an 3V3). Eine Power-LED ggf. auslöten.
+- Step-up 3,7 → 5 V mit EN aussuchen und aufbauen (Schritt 6). Vorher klären, ob EN einen eigenen Pull-down hat.
+
 ## Funktionen später
 - Zeitstempel "letztes Auslösen" (nicht in v1).
-- Windsensor (UART), eigenes Board, gleiche Basisklasse.
+- Windsensor: in Arbeit, siehe WINDSENSOR.md und PLAN.md.
 - Weidezaun (2 Schwellen über Fototransistoren), eigenes Board, gleiche Basisklasse.

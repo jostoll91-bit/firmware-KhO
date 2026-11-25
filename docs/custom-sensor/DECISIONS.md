@@ -1,4 +1,4 @@
-# Entscheidungen – Custom Sensor-Modul (Fallenmelder v1)
+# Entscheidungen – Custom Sensor-Modul (Fallenmelder v1, Windsensor)
 
 Kurz und mit Begründung. Basis: Firmware v2.7.26, Board `seeed_xiao_nrf52840_kit`.
 
@@ -74,6 +74,30 @@ Kurz und mit Begründung. Basis: Firmware v2.7.26, Board `seeed_xiao_nrf52840_ki
 - **Zielrolle SENSOR, zum Testen `is_power_saving=false`.** Die Rolle beeinflusst das Senden von Textnachrichten
   nicht. Mit power_saving macht der nRF52 "Deep Sleep" als `delay()` + Reset. Dann laufen keine Module, und die
   Uhrzeit ist danach weg.
+
+## Windsensor (Plan freigegeben 2026-11-25, Details in WINDSENSOR.md und PLAN.md)
+- **Taktmodus in der Basis statt eigener Basisklasse.** Der neue Hook `reportIntervalMs()` liefert standardmäßig 0,
+  dann läuft der Fallenmodus wie bisher (Start, 06/18, Fallback). Ein Wert > 0 schaltet auf "alle N ms messen und
+  melden". Die Messung selbst steckt im Sensormodul (`startMeasurement`/`runMeasurement`), ebenso der Text
+  (`formatReport`). Zeitplan und Senden bleiben in der Basis. Der Fallenmelder überschreibt die neuen Hooks nicht.
+- **Kein Startbericht, keine 06/18-Meldung beim Windsensor.** Das erste Messfenster beginnt 60 s nach dem Boot,
+  danach alle 30 min, gezählt ab Fensterbeginn (der Takt verschiebt sich nicht).
+- **Modbus selbst implementiert** (eine Anfrage, eine Antwort, CRC16), keine Bibliothek. Das spart Flash, und es wird
+  nur ein Register gelesen.
+- **Serial1 nur im Messfenster offen** (`begin`/`end`). Ein offener UART zieht auf dem nRF52 ~900 µA.
+- **Vektor-Mittel** (sin/cos) statt arithmetischem Mittel, damit 350° und 10° → 0° ergibt.
+- **Auswahl per eigenem Environment `seeed_xiao_nrf52840_kit_wind`** (`extends` auf das Kit-Env, nur Modul-Flags:
+  `-UCUSTOM_SENSOR_TRAP -DCUSTOM_SENSOR_WIND=1`). Gleiche Hardware-Variante, keine Pin-Änderungen. Das Fallen-Env
+  bleibt unverändert. Beide Module zusammen verhindert ein `static_assert`.
+- **EN des Step-ups an D0.** Am Header ist nur D0 frei (D1–D5, D8–D10 LoRa/SPI, D6/D7 UART). Prüfung, ob die
+  Firmware D0 als Taster benutzt: **nein.** In der Standard-Kit-Variante ist `BUTTON_PIN` nicht definiert
+  (variant.h:112 auskommentiert, nur `_i2c`/`_btb` setzen ihn), also gibt es keinen `UserButtonThread`
+  (InputBroker.cpp:148/172). `config.device.button_gpio` wirkt nur innerhalb von `#ifdef BUTTON_PIN`. D0 ist sonst
+  nur `PIN_GPS_STANDBY`, das nur das GPS-Objekt benutzt (bei NOT_PRESENT nicht vorhanden). Abschalten ist also nicht
+  nötig. Als Absicherung gibt es im Wind-Build ein `#error`, falls `BUTTON_PIN == WIND_EN_PIN`.
+  Hardware-Folgen von R2 (10 kΩ Pull-up) und Taster K1 auf dem Wio-Board: siehe OPEN.md.
+- **Erster Hardwaretest nur mit Log** (`CUSTOM_SENSOR_LOG_ONLY=1`): N/O/S/W-Rohwerte klären Skalierung (Datenblatt
+  widersprüchlich: 0,1° vs. 1°), Drehsinn und Nullpunkt, bevor etwas ins Mesh geht.
 
 ## Verworfene Ideen
 - **Akku-Teil im Meldungstext abschaltbar oder plausibilisiert** (z. B. Build-Flag `SHOW_BATTERY`, oder springende

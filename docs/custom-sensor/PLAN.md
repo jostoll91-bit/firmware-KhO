@@ -1,162 +1,138 @@
-# Plan Schritt 2 und 3
+# Plan Windsensor (Schritte 1–6)
 
-**Status:** Schritt 1–3 und der Fix der Zuordnung (`TRAP_CLOSED_MEANS_OPEN=1`) sind am Board bestätigt, Firmware mit
-6/18 läuft; 06:00-Statusmeldung und HA-Lebenszeichen-Alarm im Betrieb bestätigt (2026-11-25). `want_ack=true` am Board bestätigt. Offen: Akku/USB-Text (Test mit echtem Akku), weitere Punkte in OPEN.md. Für weitere Schritte gibt es
-noch keinen freigegebenen Plan.
+**Status:** Freigegeben am 2026-11-25. Schritt 1 (nur Doku) erledigt, als Nächstes kommt Schritt 2.
+Der Fallenmelder ist fertig und am Board getestet. Sein Plan (Schritte 1–3) steht in der Git-Historie
+(PLAN.md bis Commit `dd608a154`). Was gebaut wurde, steht in DECISIONS.md und DEVLOG.md.
 
-Freigegebener Plan, so aufgeschrieben, dass man ihn ohne den Chatverlauf umsetzen kann. Stand nach Schritt 1
-(Commit `e1743618d`). Alle Fundstellen gelten für v2.7.26. Vor der Benutzung trotzdem im Quelltext gegenprüfen.
+Sensordaten, Verdrahtung und das festgelegte Textformat stehen in `WINDSENSOR.md`. Der Plan ist so geschrieben, dass
+man ihn ohne den Chatverlauf umsetzen kann. Alle Fundstellen gelten für v2.7.26. Vor der Benutzung im Quelltext
+gegenprüfen.
 
-## Stand nach Schritt 1 (was schon da ist)
-- `src/modules/CustomSensor/CustomSensorModule.{h,cpp}`: Basis `class CustomSensorModule : protected concurrency::OSThread`
-  mit den virtuellen Hooks `setupSensor()`, `takeChangeEvent()`, `formatState(buf,len)`, `sensorWakeMs()`.
-  `runOnce()` ruft beim ersten Lauf `setupSensor()` auf und loggt danach Wechsel nur (`(not sent yet)`). Die Rückgabe
-  ist `min(sensorWakeMs(), CUSTOM_SENSOR_IDLE_INTERVAL_MS = 60 s)`. `CUSTOM_SENSOR_NAME` ist standardmäßig `"Falle"`.
-- `src/modules/CustomSensor/TrapSensorModule.{h,cpp}`: D6, `INPUT`, ISR auf CHANGE, 200 ms Debounce über
-  `volatile lastEdgeMs` und `volatile edgeCount` plus `handledEdgeCount`, GPS-Prüfung und Pin-Map-Log.
-  `formatState()` liefert `"OFFEN"` (Pin LOW, scharf) oder `"ZU (gefangen oder Kabelbruch)"` (Pin HIGH).
-  Zuordnung korrigiert nach Schritt 3 (`TRAP_CLOSED_MEANS_OPEN=1`), siehe DECISIONS.md.
-- Registrierung: `src/modules/Modules.cpp` hinter `#if CUSTOM_SENSOR_TRAP` (Include und
-  `trapSensorModule = new TrapSensorModule();` nach GenericThreadModule).
-  Build-Flag `-DCUSTOM_SENSOR_TRAP=1` in `variants/nrf52840/seeed_xiao_nrf52840_kit/platformio.ini`.
-- Die Sensor-Klasse bleibt in Schritt 2 und 3 **unverändert**. Alles Neue kommt in die Basis.
+## Grundlagen (geprüft)
+- **Serial1:** Auf nRF52 benutzt nur der GPS-Treiber Serial1 (`src/gps/GPS.cpp:42`). Er wird nur angelegt, wenn
+  `gps_mode != NOT_PRESENT` ist (`src/main.cpp:890`). Das Serial-Modul nimmt auf nRF52 `Serial2`
+  (`SERIAL_PRINT_PORT` = 2, SerialModule.cpp:66), nicht Serial1.
+  Die Pins von Serial1 sind schon D6 (TX) und D7 (RX) (`PIN_SERIAL1_TX/RX` = `GPS_TX/RX_PIN`, variant.h:195).
+  → `Serial1.begin(9600)` ist 8N1 (Adafruit-Core `Uart::begin`). Nach jedem Messfenster `Serial1.end()` aufrufen,
+  sonst zieht der UART laut Core-Kommentar ~900 µA.
+- **D0 als EN:** Am Header ist nur D0 frei. In der Standard-Kit-Variante ist `BUTTON_PIN` **nicht** definiert
+  (variant.h:112 auskommentiert, nur `_i2c` und `_btb` setzen ihn). Darum gibt es keinen `UserButtonThread`
+  (InputBroker.cpp:148/172). `config.device.button_gpio` wird nur innerhalb von `#ifdef BUTTON_PIN` benutzt.
+  D0 ist sonst nur `PIN_GPS_STANDBY`, und das benutzt nur das GPS-Objekt, das es bei NOT_PRESENT nicht gibt.
+  Hardware: R2 = 10 kΩ Pull-up nach 3V3 und Taster K1 nach GND auf dem Wio-Board, siehe OPEN.md.
 
-## Ablauf in `CustomSensorModule::runOnce()` (Ziel nach Schritt 3)
-1. **Erster Lauf:** `setupSensor()`. Bei false → `disable()`. Danach wird die Startmeldung für in 60 s geplant
-   (`bootReportDueMs = millis() + 60000`, Flag `bootReportPending`).
-2. **Ereignis:** `takeChangeEvent()` gibt true zurück → `eventPending = true`.
-   - Sind seit der letzten Ereignis-Meldung mindestens `CUSTOM_SENSOR_MIN_EVENT_GAP_MS` (10 000) vergangen, wird
-     **sofort** gesendet: `sendReport("jetzt")`, danach `lastEventSentMs = millis()` und `eventPending = false`.
-   - Sonst bleibt `eventPending` gesetzt und das Modul wacht genau dann auf, wenn die Pause um ist. Gesendet wird der
-     **dann aktuelle** gemeldete Zustand (= Endzustand). Hat der Zustand inzwischen zurückgewechselt auf den zuletzt
-     **gesendeten**, wird nichts gesendet. Dafür den zuletzt gesendeten Zustandstext oder einen Vergleichswert merken,
-     z. B. `char lastSentState[48]` mit `strcmp`.
-3. **Startmeldung** fällig → `sendReport("Start:")`.
-4. **Statusmeldung** fällig (Zeitplan oder Fallback, siehe unten) → `sendReport("Status:")`.
-5. **Rückgabe:** Minimum aus `sensorWakeMs()`, verbleibender Zeit bis zur Ereignis-Pause (falls `eventPending`),
-   verbleibender Zeit bis zur Startmeldung und 60 s.
-   - Die Abfrage `sensorWakeMs()` bleibt die **letzte** Anweisung vor dem `return`. Hintergrund: `OSThread::run()`
-     (OSThread.cpp:96) setzt das Intervall nach `runOnce()` neu. Ein ISR genau dazwischen würde sonst bis zu 60 s
-     verschluckt.
-- Zeitvergleiche immer vorzeichenlos (`(uint32_t)(millis() - t) < x`, wie `Throttle::isWithinTimespanMs`,
-  src/mesh/Throttle.cpp:32). Dann ist der `millis()`-Überlauf nach 49 Tagen kein Problem.
+## Schritt 1: Nur Doku ✅
+`WINDSENSOR.md`, dieser Plan, CLAUDE.md-Regel zu abgeleiteten Envs, DEVLOG/DECISIONS/OPEN.
 
-## Schritt 2: Senden
-### `bool sendText(const char *text)` (private, Basis)
-- **Kanal-Sperre zuerst:** `if (channels.isDefaultChannel(0))` (src/mesh/Channels.cpp:376: Standard-PSK `0x01`
-  **und** Kanalname = Preset-Name, z. B. "LongFast") →
-  `LOG_WARN("%s: NOT sent - primary channel is the public default channel. Configure a private primary channel (own name/PSK)!", CUSTOM_SENSOR_NAME); return false;`
-- `meshtastic_MeshPacket *p = router->allocForSending();` (src/mesh/Router.cpp:192). Das setzt schon
-  `to = NODENUM_BROADCAST`, `channel = 0` (Primary), hop_limit, id und `from`.
-- `p->decoded.portnum = meshtastic_PortNum_TEXT_MESSAGE_APP; p->want_ack = false;`
-- Payload: `size = min(strlen(text), meshtastic_Constants_DATA_PAYLOAD_LEN)` (233), dann
-  `memcpy(p->decoded.payload.bytes, text, size)`.
-- `service->sendToMesh(p, RX_SRC_LOCAL, true);` (src/mesh/MeshService.h:167, ccToPhone=true, damit es in der App
-  erscheint).
-- `LOG_INFO("%s: sent id=0x%08x '%s'", ...)`.
-- Includes: `"MeshService.h"` (`service`), `"mesh/Router.h"` bzw. `"Router.h"` (`router`), `"mesh/Channels.h"`
-  (`channels`), `"PowerStatus.h"` (`powerStatus`), `"gps/RTC.h"`. Pfade so wie in
-  `src/modules/DetectionSensorModule.cpp` (nur lesen!).
-
-### `void sendReport(const char *prefix)` (private, Basis)
-- Text: `"<NAME> <prefix> <state> | <battery>"`, ASCII, keine Umlaute.
-- Batterie (src/PowerStatus.h:50–65, `powerStatus` wird alle 20 s vom Power-Thread aktualisiert):
-  - `powerStatus && powerStatus->getHasBattery()` → `"Akku %u%% %d.%02dV"` aus `getBatteryChargePercent()` und
-    `getBatteryVoltageMv()`.
-  - sonst `"USB"`.
-- Beispiele:
-  - `Falle jetzt ZU (gefangen oder Kabelbruch) | Akku 87% 4.05V`  (Alarm)
-  - `Falle jetzt OFFEN | USB`  (wieder scharf)
-  - `Falle Status: OFFEN | Akku 87% 4.05V`
-  - `Falle Start: OFFEN | Akku 87% 4.05V`
-- Puffer z. B. `char msg[120]` mit `snprintf`.
-
-### Umsetzung Schritt 2 (so gebaut, kleine Präzisierungen zum Plan)
-- `lastSentState` wird beim Init mit dem Boot-Zustand gefüllt (es wird beim Boot noch nichts gesendet). Das ist
-  nur der Vergleichswert. Der **erste** Wechsel nach dem Boot wird immer sofort gesendet (vor der ersten Meldung
-  gibt es keine Pause). Nach dem Boot bleibt also kein Wechsel unbemerkt.
-- Gleicht der Zustand nach der Pause dem zuletzt gesendeten, wird nichts gesendet, und die 10-s-Pause startet
-  **nicht** neu. Der nächste echte Wechsel geht dann sofort raus.
-- Die Pause startet auch, wenn die Kanal-Sperre greift. So kommt die Warnung höchstens alle 10 s.
-- In Schritt 3 die Rückgabe in `runOnce()` um die Startmeldung erweitern, `sensorWakeMs()` bleibt zuletzt.
-
-### Umfang Schritt 2
-- `sendText`, `sendReport`, Kanal-Sperre, Ereignis-Meldung mit 10-s-Mindestabstand und Endzustand, Akku/USB-Text.
-- Neues Build-Flag mit Default im Header: `CUSTOM_SENSOR_MIN_EVENT_GAP_MS 10000`.
-- Startmeldung und Zeitplan kommen erst in Schritt 3.
-
-### Test Schritt 2 (am Board, vorher fragen)
-- Primary-Channel ist privat → Wechsel erscheinen als Text in der App und beim Zuhause-Knoten.
-- Wedeln (vorher 6 Wechsel in 6 s im Log) → im Mesh höchstens 2 Meldungen: die erste sofort, der Endzustand nach
-  ≥10 s. Endet das Wedeln im Ausgangszustand, kommt nur die erste.
-- Mit Akku ohne USB → `Akku ..%`. Nur am USB ohne Akku → `USB`.
-
-## Schritt 3: Zeitplan
-### Build-Flags (Defaults im Header)
-`CUSTOM_SENSOR_STATUS_HOUR_A 6`, `CUSTOM_SENSOR_STATUS_HOUR_B 18` (Bedingung A < B),
-`CUSTOM_SENSOR_FALLBACK_INTERVAL_MS (6 * 3600 * 1000UL)`, `CUSTOM_SENSOR_BOOT_REPORT_DELAY_MS 60000`.
-
-### Zeit holen
-- `uint32_t utc = getValidTime(RTCQualityFromNet);` (src/gps/RTC.h:53). Das ist **0**, solange die Zeit nicht
-  gültig ist. `local` immer `false` lassen, wir rechnen selbst. Mesh-Zeit kommt nur aus Positions-Paketen mit
-  `location_source >= LOC_INTERNAL` (PositionModule.cpp:130–146). Bei uns schickt die der Solarknoten mit GPS.
-
-### Berlin-Zeit (`static int32_t berlinOffsetSecs(uint32_t utc)`)
-- MEZ = +3600. MESZ = +7200 vom **letzten Sonntag im März 01:00 UTC** bis zum **letzten Sonntag im Oktober
-  01:00 UTC**.
-- Umsetzung: `gmtime_r` für das Jahr, dann für den 31.03. bzw. 31.10. 01:00 UTC per `mktime`-freier Rechnung
-  (Tage seit Epoch) den Wochentag bestimmen und auf Sonntag zurückgehen. Kein `setenv("TZ")`, keine globale
-  Änderung. `config.device.tzdef` wird **nicht** benutzt (im Gerät steht zudem `M3.4.0`, siehe OPEN.md).
-- `local = utc + berlinOffsetSecs(utc)`, `day = local / 86400`, `sec = local % 86400`.
-
-### Slot-Logik
-- `A = HOUR_A*3600`, `B = HOUR_B*3600`.
-- `sec >= B` → slot `day*2+1`; `sec >= A` → slot `day*2`; sonst slot `(day-1)*2+1`. Das ist jeweils der **zuletzt
-  vergangene** Termin.
-- `int32_t lastSlot = -1` (-1 heißt: Zeit war noch nie gültig, oder wir kommen aus dem Fallback).
-  - Gültige Zeit und `lastSlot == -1` → `lastSlot = slot` (nur merken, **nichts nachholen**), Log
-    `"time valid, schedule active"`.
-  - `slot > lastSlot` → `sendReport("Status:")`, `lastSlot = slot`, `lastStatusMs = millis()`.
-  - `slot < lastSlot` (Uhr sprang zurück) → nur `lastSlot = slot`.
-- Sommer/Winterzeit-Umstellung (02/03 Uhr) berührt 06/18 nicht.
-- Weckintervall bleibt maximal 60 s. Der Termin wird also höchstens ~60 s zu spät erkannt, ein genauer Wecker ist
-  nicht nötig.
-
-### Fallback ohne gültige Zeit
-- `utc == 0` → `lastSlot = -1`. Sind seit `lastStatusMs` (Startwert: Boot = 0) mindestens 6 h vergangen,
-  → `sendReport("Status:")` und `lastStatusMs = millis()`.
-- Log einmalig beim Wechsel: `"no valid time, fallback every 6 h"`.
-
-### Startmeldung
-- 60 s nach `setupSensor()` einmal `sendReport("Start:")`, damit das Mesh sich vorher eingeschwungen hat.
-  `lastStatusMs = millis()` setzen, damit der 6-h-Fallback ab dort zählt.
-
-### Umsetzung Schritt 3 (so gebaut, Präzisierungen zum Plan)
-- Datumsrechnung in `BerlinTime.h` statt `gmtime_r` (header-only, auf dem PC testbar). Ergebnis siehe DEVLOG.
-- Reihenfolge in `runOnce()`: Setup → Ereignis → `handleSchedule()` (Start, dann Zeitplan/Fallback) → Rückgabe.
+## Schritt 2: Basis um Taktmodus erweitern (Fallenmelder bleibt unverändert)
+- **Schutz:** In `CustomSensorModule.h/.cpp` wird `#if CUSTOM_SENSOR_TRAP` zu
+  `#if CUSTOM_SENSOR_TRAP || CUSTOM_SENSOR_WIND`. Dazu kommt
+  `static_assert(!(CUSTOM_SENSOR_TRAP && CUSTOM_SENSOR_WIND), ...)`, damit nicht beide gleichzeitig gebaut werden.
+  `CUSTOM_SENSOR_NAME` ist standardmäßig `"Wind"`, wenn `CUSTOM_SENSOR_WIND` gesetzt ist, sonst `"Falle"`.
+- **Neue virtuelle Hooks.** Die Standardwerte lassen den Fallenmelder genau so laufen wie bisher:
+  - `virtual uint32_t reportIntervalMs() { return 0; }`: 0 heißt Fallenmodus (Start, 06/18, 6-h-Fallback, wie
+    bisher). Ein Wert > 0 heißt Taktmodus: `handleSchedule()` läuft nicht, stattdessen `handlePeriodic()`.
+  - `virtual void startMeasurement() {}`: Beginn des Messfensters.
+  - `virtual int32_t runMeasurement() { return 0; }`: ms bis zum nächsten Aufruf, **0 = fertig**.
+  - `virtual void formatReport(char *buf, size_t len, const char *battery) {}`: der komplette Meldungstext.
+- **`handlePeriodic()`** (private):
+  - `nextCycleMs` startet bei `Setup + CUSTOM_SENSOR_BOOT_REPORT_DELAY_MS` (60 s).
+  - Ist ein Zyklus fällig und läuft gerade keine Messung: `nextCycleMs += reportIntervalMs()`. Liegt das schon in
+    der Vergangenheit, stattdessen `millis() + Intervall`. Dann `startMeasurement()` aufrufen und `measuring = true`
+    setzen. Danach sofort `runMeasurement()`.
+  - Während `measuring`: Ist `measureDueMs` erreicht, `r = runMeasurement()` aufrufen. Ist `r == 0`, dann
+    `measuring = false` und die Meldung senden. Sonst `measureDueMs = millis() + r`.
+  - Der Takt zählt ab Fensterbeginn, so verschiebt er sich nicht. Die Meldung kommt ~122 s nach Fensterbeginn.
+- **Rückgabe `runOnce()`:** Zusätzlich das Minimum mit der Restzeit bis `nextCycleMs` bzw. `measureDueMs` bilden.
   `sensorWakeMs()` bleibt die letzte Abfrage.
-- **Zeitquelle:** Gültig ist die Zeit auch, wenn die **App** verbunden war (`set_time_only` → `RTCQualityNTP`,
-  AdminModule.cpp:442), nicht nur durch GPS-Positionen vom Solarknoten. Für den Test heißt das: Wird die App
-  verbunden, ist die Zeit sofort gültig. Den Fallback-Test deshalb **ohne App-Verbindung** machen.
-- Status- und Startmeldung setzen ebenfalls `lastSentState`. Läuft gerade eine 10-s-Pause und die
-  Statusmeldung enthält schon den neuen Zustand, kommt danach keine doppelte Ereignis-Meldung.
+- **Batterie:** Neue protected Hilfsfunktion `batteryPercentText(char *buf, size_t len)` liefert `"87%"` oder `"USB"`
+  (gleiche Quelle und gleiche `#if`-Bedingung wie in `sendReport`). Der Text des Fallenmelders bleibt unverändert.
+- **Nur-Log-Modus:** Neues Flag `CUSTOM_SENSOR_LOG_ONLY`, Standard 0. Bei 1 loggt `sendText()` nur
+  `"%s: LOG ONLY, not sent '%s'"` und gibt true zurück. Bei 0 bleibt der Code genau wie bisher (`#if`).
+- `sendText()` wird `protected`. Kanal-Sperre und `want_ack` gelten damit auch für den Windsensor.
+- Danach den **Fallenmelder bauen** und Flash/RAM vergleichen (vorher 725 896 B / 102 204 B).
+  Erwartet: wenige Bytes mehr, keine Änderung im Ablauf.
 
-### Test Schritt 3 (am Board, vorher fragen)
-- Log nach dem Boot: `no valid time, fallback every 6 h`, nach 60 s die Startmeldung im Mesh.
-- Warten auf eine GPS-Position vom Solarknoten → `time valid, schedule active`. Danach sind die Log-Zeitstempel
-  nicht mehr `??:??:??`.
-- **Zeitplan-Test:** Einmal mit `-DCUSTOM_SENSOR_STATUS_HOUR_A=<nächste volle Stunde Berlin>` und
-  `-DCUSTOM_SENSOR_STATUS_HOUR_B=<übernächste>` bauen. Das Flag nur **temporär** auf der Kommandozeile setzen, z. B.
-  `PLATFORMIO_BUILD_FLAGS="-DCUSTOM_SENSOR_STATUS_HOUR_A=14 -DCUSTOM_SENSOR_STATUS_HOUR_B=15" pio run -e seeed_xiao_nrf52840_kit -t upload --upload-port /dev/ttyACM0`.
-  Erwartet: Statusmeldung ≤60 s nach der vollen Stunde, und zwar genau eine. Danach normal ohne die Flags neu flashen.
-- Fallback-Test optional mit `-DCUSTOM_SENSOR_FALLBACK_INTERVAL_MS=300000` (5 min) ohne Zeitquelle.
+## Schritt 3: `WindSensorModule` (nur Log) + Environment
+- **Neues Environment** in `variants/nrf52840/seeed_xiao_nrf52840_kit/platformio.ini`:
+  ```
+  [env:seeed_xiao_nrf52840_kit_wind]
+  extends = env:seeed_xiao_nrf52840_kit
+  board_level = extra
+  build_flags = ${env:seeed_xiao_nrf52840_kit.build_flags}
+    -UCUSTOM_SENSOR_TRAP
+    -DCUSTOM_SENSOR_WIND=1
+  ```
+  Nur Modul-Flags, keine Pin-Änderungen. Das Fallen-Env bleibt unverändert. Prüfen, dass `-U` nach `-D` wirkt:
+  In der Wind-ELF dürfen keine TrapSensor-Symbole stehen (`nm`).
+- **Registrierung** in `src/modules/Modules.cpp`: `#if CUSTOM_SENSOR_WIND` mit Include und
+  `windSensorModule = new WindSensorModule();` direkt beim Fallenmelder.
+- **Neue Dateien** `src/modules/CustomSensor/WindSensorModule.{h,cpp}`, Schutz `#if CUSTOM_SENSOR_WIND`.
+- **Build-Flags (Standardwert im Header):** `WIND_EN_PIN D0`, `WIND_MODBUS_ADDR 0x04`, `WIND_RAW_PER_DEGREE 10`,
+  `WIND_WARMUP_MS 2000`, `WIND_WINDOW_MS 120000`, `WIND_SAMPLE_MS 2000`, `WIND_RESPONSE_TIMEOUT_MS 200`,
+  `WIND_REPORT_INTERVAL_MS (30 * 60 * 1000UL)`. Im Wind-Env in Schritt 3 zusätzlich `-DCUSTOM_SENSOR_LOG_ONLY=1`.
+- **Sperre beim Kompilieren:** `#if defined(BUTTON_PIN) && (BUTTON_PIN == WIND_EN_PIN)` → `#error`. Dann wäre D0
+  ein Taster, siehe Grundlagen.
+- **`setupSensor()`:**
+  - Ist GPS nicht `NOT_PRESENT`: `LOG_ERROR("Wind: DISABLED - D6/D7 are the GPS UART (Serial1) ...")` und false.
+  - Sonst `pinMode(WIND_EN_PIN, OUTPUT); digitalWrite(WIND_EN_PIN, LOW);` (HIGH = Sensor an).
+  - Pin-Map loggen wie beim Fallenmelder (EN, TX, RX).
+  - `takeChangeEvent()` gibt immer false zurück. `formatState()` liefert den letzten Wert, nur fürs Init-Log.
+- **Zustandsmaschine** (`startMeasurement`/`runMeasurement`, nie ein langes `delay`):
+  1. `startMeasurement()`: EN HIGH, `Serial1.begin(9600)`, Zähler und Summen auf 0, `windowStartMs` merken,
+     Zustand WARMUP. Rückgabe von `runMeasurement()`: `WIND_WARMUP_MS`.
+  2. REQUEST: Empfangspuffer leeren (`while (Serial1.available()) Serial1.read();`), dann 8 Bytes
+     `04 03 00 00 00 01 CRClo CRChi` senden (CRC im Code berechnet). Zustand WAIT, Rückgabe 20.
+  3. WAIT: Verfügbare Bytes in einen Puffer (max. 16) lesen. Bei 7 Bytes, oder nach `WIND_RESPONSE_TIMEOUT_MS`,
+     die Antwort auswerten. Sonst Rückgabe 20.
+  4. Auswerten: Adresse, Funktion 0x03, Bytezahl 2, CRC (0xA001, Low-Byte zuerst), dann
+     `raw <= 360 * WIND_RAW_PER_DEGREE`. Ist alles gültig:
+     `deg = raw / (float)WIND_RAW_PER_DEGREE`, `sumSin += sinf(rad)`, `sumCos += cosf(rad)`, `valid++`.
+  5. Nächste Anfrage im 2-s-Raster ab Fensterbeginn. Sind seit Fensterbeginn `WIND_WARMUP_MS + WIND_WINDOW_MS`
+     vergangen: EN LOW, `Serial1.end()`, Ergebnis berechnen, Rückgabe 0.
+  - Ergebnis: Bei `valid == 0` ist es `ERR`. Sonst `atan2f(sumSin, sumCos)` in Grad, auf 0..359 bringen,
+    ganzzahlig runden, 360 → 0.
+- **`formatReport`:** `"WIND d=%d bat=%s"` bzw. `"WIND d=ERR bat=%s"`.
+- **Logs:**
+  - Pro Antwort: `Wind: raw=%u (0x%04x)`, oder `Wind: timeout, got %u bytes: <hex>`, `Wind: CRC bad: <hex>`,
+    `Wind: out of range raw=%u`.
+  - Pro Fenster: `Wind: window done, %u/%u valid, d=%d`.
+- Danach **beide Envs bauen** und die Größe messen (Falle muss gleich bleiben wie nach Schritt 2).
+
+## Schritt 4: Erster Hardwaretest (nur nach „Board ist angeschlossen“)
+- **Aufbau:** Fahne direkt an 5 V (USB-Pin des XIAO), noch ohne Step-up. RS485-Modul an 3V3. Modul-TX → D7,
+  Modul-RX → D6, A/B zur Fahne. Vorher die TX-Spannung des Moduls messen (≤ 3,3 V).
+- **Gerät:** `gps_mode = NOT_PRESENT`, Primary-Channel privat.
+- **Flash:** `pio run -e seeed_xiao_nrf52840_kit_wind -t upload --upload-port /dev/ttyACM0`, im Log-Modus.
+  Für schnellere Fenster einmalig mit `PLATFORMIO_BUILD_FLAGS="-DWIND_REPORT_INTERVAL_MS=300000"` (5 min) bauen.
+- **Mitschnitt:** `~/.platformio/penv/bin/python -I docs/custom-sensor/tools/serlog.py /dev/ttyACM0 <sek> <datei>`
+  im Hintergrund laufen lassen.
+- **Ablauf:**
+  - Kommt keine Antwort (nur Timeouts mit 0 Bytes): erst TX/RX tauschen, dann A/B.
+  - Kommen Bytes, aber der CRC ist falsch: Baudrate oder Adresse prüfen und den Hex-Dump ansehen.
+  - **Fahne nacheinander auf N, O, S, W** stellen, jeweils ein paar Werte lang festhalten, Rohwert notieren.
+    Erwartet bei 0,1°: N≈0/3600, O≈900, S≈1800, W≈2700. Prüfen:
+    - **Skalierung:** 900 oder 90 bei Ost?
+    - **Drehsinn:** O vor S im Uhrzeigersinn steigend?
+    - **Nullpunkt:** N ≈ 0, wenn der Pfeil am Sockel nach Nord zeigt.
+- Ergebnis ins DEVLOG, die Entscheidung zur Skalierung ins DECISIONS.
+
+## Schritt 5: Senden einschalten, Skalierung festlegen
+- `WIND_RAW_PER_DEGREE` nach dem Testergebnis setzen. Passen Drehsinn oder Nullpunkt nicht, minimal mit eigenem
+  Flag korrigieren (z. B. `WIND_OFFSET_DEG`), nur wenn der Test das verlangt.
+- `-DCUSTOM_SENSOR_LOG_ONLY=1` aus dem Wind-Env entfernen.
+- Board-Test: `WIND d=… bat=…` erscheint in der App und kommt in HA an. Einmal die Fahne abziehen →
+  `WIND d=ERR bat=…`.
+
+## Schritt 6: Versorgung (später)
+- Step-up 3,7 → 5 V mit EN an D0. Entscheidung R2 auslöten ja/nein, siehe OPEN.md.
+- Ruhestrom des RS485-Moduls und der Gesamtschaltung messen.
 
 ## Allgemeines Vorgehen
-- Nach jedem Schritt: `pio run -e seeed_xiao_nrf52840_kit`, Flash-/RAM-Zahlen ins DEVLOG (Vergleich zum Vorschritt;
-  die Baseline steht dort), DEVLOG, DECISIONS, OPEN und PLAN aktualisieren, **ein** Commit.
-- **Vor dem Flashen fragen.** Log mitschneiden mit `docs/custom-sensor/tools/serlog.py`
-  (`pio device monitor` geht nicht ohne interaktives Terminal).
-- Baseline-Messung ohne Modul: `PLATFORMIO_BUILD_DIR=<scratch> PLATFORMIO_BUILD_FLAGS="-UCUSTOM_SENSOR_TRAP" pio run -e seeed_xiao_nrf52840_kit`.
-  Das eigene Build-Verzeichnis sorgt dafür, dass `.pio/build` unberührt bleibt.
-- Gerätekonfiguration für Tests: `position.gps_mode = NOT_PRESENT` (Pflicht), Rolle SENSOR,
-  `power.is_power_saving = false`, Primary-Channel privat.
+- Nach jedem Schritt bauen:
+  - Falle: `pio run -e seeed_xiao_nrf52840_kit`
+  - Wind: `pio run -e seeed_xiao_nrf52840_kit_wind`
+  - Flash/RAM (`arm-none-eabi-size`, Flash = text + data) vorher und nachher ins DEVLOG.
+- DEVLOG, DECISIONS, OPEN und PLAN aktualisieren, **ein** Commit pro Schritt.
+- **Vor dem Flashen fragen**, erst nach „Board ist angeschlossen“.
+- Zeitvergleiche immer vorzeichenlos (`(uint32_t)(millis() - t)`), wegen des `millis()`-Überlaufs.

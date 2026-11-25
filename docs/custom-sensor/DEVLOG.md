@@ -225,3 +225,14 @@ erst nach dem Commit feststeht.
 - Push wurde abgelehnt (GitHub-E-Mail-Schutz). Im Repo `user.email` auf die GitHub-Noreply-Adresse gesetzt und
   die 5 noch nicht gepushten Commits umgeschrieben (Inhalt gleich, neue Hashes). Hashes oben korrigiert.
 - Commit: dieser Commit.
+
+## 2026-11-25 – Windsensor Schritt 1: Analyse, Plan, Doku
+- Plan für den Windsensor freigegeben (PLAN.md, Schritte 1–6). Sensordaten in neuer Datei `WINDSENSOR.md`, die
+  Notiz `windsensor-acovmelst-datenblatt.md` ist darin aufgegangen und gelöscht. `Startprompt_Windsensor.md`
+  (Aufgabenstellung) mit eingecheckt.
+- Geprüft: Serial1 nutzt auf nRF52 nur der GPS-Treiber (bei NOT_PRESENT nicht angelegt). D0 ist der einzige freie
+  Header-Pin, in der Standard-Kit-Variante kein `BUTTON_PIN`, also kein Button-Thread auf D0 (DECISIONS.md).
+  Schaltplan Wio-SX1262 for XIAO V1.0: D0 hat R2 = 10 kΩ Pull-up und Taster K1, D6/D7 sind dort frei (OPEN.md).
+- CLAUDE.md: Regel präzisiert (abgeleitete Envs per `extends` nur für Modul-Flags).
+- Ausgangsgröße (Fallenmelder, Stand `dd608a154`): Flash 725 896 B, RAM (statisch) 102 204 B. Keine Code-Änderung.
+- Commit: dieser Commit (Hash im nächsten Eintrag).

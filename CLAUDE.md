@@ -7,6 +7,9 @@
 - Fork von meshtastic/firmware, Branch `custom-sensor-module`, Basis-Tag v2.7.26.54e0d8d
 - Hardware: Seeed XIAO nRF52840 + Wio-SX1262 Kit
 - PlatformIO-Environment: `seeed_xiao_nrf52840_kit`
+  - Hardware-Variante ausschließlich `seeed_xiao_nrf52840_kit`; abgeleitete Environments per `extends` sind nur
+    für Modul-Flags erlaubt (z. B. `seeed_xiao_nrf52840_kit_wind` für den Windsensor). Das Fallen-Environment
+    bleibt unverändert.
   - NIEMALS `seeed_xiao_nrf52840_btb` verwenden (falsche Pins, SX1262-Init-Fehler, Boot-Loop)
   - `_i2c`-Variante wird nicht gebraucht
 - Bestehendes Netz (Zentral-Solarknoten, Zuhause-Knoten mit MQTT/HomeAssistant/ntfy)
@@ -52,7 +55,8 @@ Senden/Zeitplan/Batterie (gemeinsam), aber nicht überengineeren.
 - Kleine Schritte, ein Git-Commit pro Schritt auf dem Branch.
 - Code und Kommentare auf Englisch. Erklärungen an mich auf Deutsch, einfach gehalten
   (ich bin kein C++-Profi).
-- Build: `pio run -e seeed_xiao_nrf52840_kit`
+- Build: `pio run -e seeed_xiao_nrf52840_kit` (Fallenmelder), `pio run -e seeed_xiao_nrf52840_kit_wind` (Windsensor,
+  ab Windsensor-Schritt 3). Beim Flashen das passende Env nehmen.
 - Flash: `pio run -e seeed_xiao_nrf52840_kit -t upload --upload-port /dev/ttyACM0`
   Vor dem Flashen immer fragen (ich muss am Board sein).
 - Keine blockierenden Befehle starten.
