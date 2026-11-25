@@ -9,7 +9,8 @@
   der ADC am offenen VBAT-Teiler (P0.31) nur Rauschen, und USB wird auf dem Kit nicht sicher erkannt.
   Mit echtem Akku gegenprüfen, ggf. Ursache in `Power.cpp` ansehen (nur lesen). Eine Änderung am Akku-Text
   (abschalten/plausibilisieren) ist vorerst verworfen, siehe DECISIONS.md "Verworfene Ideen".
-- Kanal-Sperre (öffentlicher Standardkanal) am Board noch nicht ausprobiert.
+- Kanal-Sperre (öffentlicher Standardkanal) am Board noch nicht ausprobiert. Zurückgestellt: Der Standardkanal
+  müsste dafür erst eingerichtet werden, bei den eigenen Geräten ist er nicht vorgesehen.
 
 ## HomeAssistant
 - Erledigt: Die Fallen-Automatisierung ist umgestellt, ntfy liefert 🚨 bei `ZU (gefangen oder Kabelbruch)` und ✅ bei
@@ -57,6 +58,7 @@
   In Jahren mit fünf Sonntagen im März oder Oktober springt die Uhr sonst eine Woche zu früh um, z. B. 2026 und 2030.
   Unser Modul ist nicht betroffen (eigene Berlin-Rechnung), nur Anzeigen. → In der App korrigieren. Andere Knoten
   prüfen?
+  **Laut Nutzer in der App korrigiert (2026-11-25).** Beim nächsten Boot-Log gegenprüfen.
 
 ## Funktionen später
 - Zeitstempel "letztes Auslösen" (nicht in v1).

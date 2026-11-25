@@ -197,4 +197,9 @@ erst nach dem Commit feststeht.
 - Heute 06:00 kam die Statusmeldung des Fallenmelders (Zeitplan im echten Betrieb über Nacht) ✅,
   danach "wieder da" in HA.
 - Testauslösungen (ZU/OFFEN) kommen weiter per ntfy an ✅.
-- Keine Code-Änderung. Commit: dieser Commit.
+- Keine Code-Änderung. Commit: `343f0b3dd`.
+
+## 2026-11-25 – Offene Punkte nachgetragen
+- `tzdef` laut Nutzer in der App korrigiert (Gegenprüfung im nächsten Boot-Log).
+- Test der Kanal-Sperre zurückgestellt (öffentlicher Standardkanal ist auf den eigenen Geräten nicht eingerichtet).
+- Commit: dieser Commit.
