@@ -40,6 +40,13 @@ static_assert(0 <= CUSTOM_SENSOR_STATUS_HOUR_A && CUSTOM_SENSOR_STATUS_HOUR_A < 
 #define CUSTOM_SENSOR_FALLBACK_INTERVAL_MS (6 * 3600 * 1000UL)
 #endif
 
+// 1 = send all messages with want_ack. For broadcasts this means: up to 3 retransmissions until a
+// neighbour is heard relaying the packet ("implicit ACK", first hop only, not end-to-end).
+// 0 = send once, no retransmission.
+#ifndef CUSTOM_SENSOR_WANT_ACK
+#define CUSTOM_SENSOR_WANT_ACK 1
+#endif
+
 // The start message is sent this long after sensor setup, so the mesh has settled.
 #ifndef CUSTOM_SENSOR_BOOT_REPORT_DELAY_MS
 #define CUSTOM_SENSOR_BOOT_REPORT_DELAY_MS 60000

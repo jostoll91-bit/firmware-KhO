@@ -25,7 +25,7 @@ bool CustomSensorModule::sendText(const char *text)
     // allocForSending() already sets from, to = broadcast, channel 0 (primary, zeroed), hop_limit and id.
     meshtastic_MeshPacket *p = router->allocForSending();
     p->decoded.portnum = meshtastic_PortNum_TEXT_MESSAGE_APP;
-    p->want_ack = false;
+    p->want_ack = CUSTOM_SENSOR_WANT_ACK; // retransmit until a neighbour relays it, see header
 
     size_t size = strlen(text);
     if (size > meshtastic_Constants_DATA_PAYLOAD_LEN)

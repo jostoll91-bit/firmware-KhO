@@ -202,4 +202,12 @@ erst nach dem Commit feststeht.
 ## 2026-11-25 – Offene Punkte nachgetragen
 - `tzdef` laut Nutzer in der App korrigiert (Gegenprüfung im nächsten Boot-Log).
 - Test der Kanal-Sperre zurückgestellt (öffentlicher Standardkanal ist auf den eigenen Geräten nicht eingerichtet).
+- Commit: `af9808626`.
+
+## 2026-11-25 – want_ack für alle Meldungen
+- Neues Flag `CUSTOM_SENSOR_WANT_ACK` (Standard 1) in `CustomSensorModule.h`, `sendText()` setzt
+  `p->want_ack` daraus. Wirkung bei Broadcast: bis zu 3 Wiederholungen bis zum implicit ACK (erster Hop).
+- Geprüft: `router` ist in v2.7.26 ein `ReliableRouter` (main.cpp:734), `NUM_RELIABLE_RETX = 3`.
+- Build: SUCCESS, Flash 725 896 B (unverändert), RAM unverändert, clang-format (Projekt-Stil) sauber.
+- Am Board noch nicht getestet.
 - Commit: dieser Commit.

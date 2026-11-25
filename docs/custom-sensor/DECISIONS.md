@@ -44,8 +44,11 @@ Kurz und mit Begründung. Basis: Firmware v2.7.26, Board `seeed_xiao_nrf52840_ki
   gesendet und die Pause startet nicht neu.
 - **Kanal-Sperre:** Ist der Primary-Channel der öffentliche Standardkanal (Standard-PSK + Preset-Name, z. B.
   "LongFast"), wird nicht gesendet. Es gibt eine deutliche Warnung im Log.
-- **`want_ack=false` in v1.** Bei Broadcasts würde `want_ack=true` nur bis zum ersten Hop wiederholen
-  (Details in OPEN.md, Zustellsicherheit). Kandidat für v1.1.
+- **`want_ack=true` für alle Meldungen (seit 2026-11-25, Flag `CUSTOM_SENSOR_WANT_ACK`, Standard 1).** Bei
+  Broadcasts wiederholt der Router bis zu 3-mal, bis ein Nachbar das Paket per LoRa weitersendet (implicit ACK,
+  ReliableRouter.cpp:42–62). Bestätigt ist nur der erste Hop, nicht die Ankunft beim Zuhause-Knoten. Gilt auch für
+  Start- und Statusmeldungen, weil die ebenfalls `ZU` (Alarm) enthalten können. Kostet im Normalfall keine
+  Sendezeit, nur wenn kein Nachbar weitersendet. Mit `-DCUSTOM_SENSOR_WANT_ACK=0` wieder wie v1.
 - **Pause startet nur bei einem Sendeversuch.** Bestätigt am Board (Test 2a): Endet die Pause mit dem schon
   gesendeten Zustand, geht der nächste echte Wechsel sofort raus statt bis zu 10 s später.
 - **Kanal-Sperre zählt als Sendeversuch** für den Mindestabstand, damit die Warnung das Log nicht flutet.

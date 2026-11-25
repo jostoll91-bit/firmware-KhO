@@ -45,12 +45,11 @@
 - **CLIENT_MUTE** als Rolle prüfen: Fremde Pakete werden nicht weitergeleitet, das spart Sendezeit.
 
 ## Zustellsicherheit
-- Aktuell `want_ack=false`, also keine Wiederholung bei Verlust.
-- **Geprüft in v2.7.26:** Mit `want_ack=true` startet `ReliableRouter::send` (ReliableRouter.cpp:19) **auch bei
-  Broadcasts** bis zu 3 Wiederholungen (`NUM_RELIABLE_RETX`, NextHopRouter.h:93). Sie stoppen, sobald ein Nachbar
-  das Paket per LoRa weitersendet ("implicit ACK", ReliableRouter.cpp:42–62). Das bestätigt nur den **ersten Hop**,
-  nicht die Ankunft beim Zuhause-Knoten.
-  → Kandidat für v1.1: Ereignis-Meldungen mit `want_ack=true`.
+- **`want_ack=true` umgesetzt** (DECISIONS.md, Senden), am Board noch nicht getestet. Test: Meldung auslösen,
+  im Log `Rx someone rebroadcasting for us` und `Generate implicit ack` suchen; ohne erreichbaren Nachbarn
+  `Sending retransmission ... tries left=` und am Ende `Reliable send failed` (nur mit DEBUG-Log sichtbar).
+- Echte Ende-zu-Ende-Bestätigung nur per Direktnachricht an den Zuhause-Knoten. Offen: Kommt eine
+  Direktnachricht über MQTT bei HA an? Erst prüfen, falls nötig.
 
 ## Gerätekonfiguration
 - **Zeitzone im Gerät falsch:** `config.device.tzdef` = `CET-1CEST,M3.4.0/2:00:00,M10.4.0/3:00:00` (aus dem Boot-Log).

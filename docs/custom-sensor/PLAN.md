@@ -1,7 +1,7 @@
 # Plan Schritt 2 und 3
 
 **Status:** Schritt 1–3 und der Fix der Zuordnung (`TRAP_CLOSED_MEANS_OPEN=1`) sind am Board bestätigt, Firmware mit
-6/18 läuft; 06:00-Statusmeldung und HA-Lebenszeichen-Alarm im Betrieb bestätigt (2026-11-25). Offen: Akku/USB-Text (Test mit echtem Akku), weitere Punkte in OPEN.md. Für weitere Schritte gibt es
+6/18 läuft; 06:00-Statusmeldung und HA-Lebenszeichen-Alarm im Betrieb bestätigt (2026-11-25). `want_ack=true` gebaut, Board-Test offen (OPEN.md, Zustellsicherheit). Offen: Akku/USB-Text (Test mit echtem Akku), weitere Punkte in OPEN.md. Für weitere Schritte gibt es
 noch keinen freigegebenen Plan.
 
 Freigegebener Plan, so aufgeschrieben, dass man ihn ohne den Chatverlauf umsetzen kann. Stand nach Schritt 1
